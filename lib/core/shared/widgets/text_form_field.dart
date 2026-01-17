@@ -1,0 +1,42 @@
+import 'package:flutter/material.dart';
+
+// This Custom TextFormField Widget have label and hint and icon
+class CustomTextFormField extends StatelessWidget {
+  TextEditingController controller;
+  String label;
+  String hintText;
+  IconData icon;
+  TextInputType keyboardType;
+  bool obscureText;
+
+  CustomTextFormField({
+    super.key,
+    required this.controller,
+    required this.label,
+    required this.hintText,
+    required this.icon,
+    required this.keyboardType,
+    required this.obscureText
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(top: 24),
+      child: TextFormField(
+        controller: controller,
+        keyboardType:keyboardType ,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          label: Text(label),
+          hintText: hintText,
+
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          suffixIcon: Icon(icon),
+        ),
+      ),
+    );
+  }
+}
