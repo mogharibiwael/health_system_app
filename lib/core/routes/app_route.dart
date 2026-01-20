@@ -3,4 +3,5 @@ class AppRoute {
   static String login = '/login';
   static String signUp = '/signup';
   static String home = '/home';
+  static String forgotPassword = '/forgot_password';
 }

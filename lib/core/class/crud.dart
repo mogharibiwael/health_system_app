@@ -1,42 +1,57 @@
 import 'dart:convert';
 import 'package:dartz/dartz.dart';
-import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:nutri_guide/core/class/status_request.dart';
-import 'package:nutri_guide/core/function/check_internet.dart';
-
-import '../service/serviecs.dart';
+import 'package:nutri_guide/core/constant/api_header.dart';
+import 'status_request.dart';
+import '../function/check_internet.dart';
 
 class Crud {
-  final MyServices myServices = Get.find();
-
   Future<Either<StatusRequest, Map<String, dynamic>>> postData(
       String url,
-      Map<String, dynamic> data,
-      ) async {
+      Map<String, dynamic> data, {
+        String? token,
+      }) async {
     try {
-      if (!await checkInternet()) {
-        return const Left(StatusRequest.offlineFailure);
-      }
+      final hasInternet = await checkInternet();
+      if (!hasInternet) return const Left(StatusRequest.offlineFailure);
 
-      final token = myServices.sharedPreferences.getString("token");
+     
 
-      final response = await http.post(
+      final res = await http.post(
         Uri.parse(url),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          if (token != null) "Authorization": "Bearer $token",
-        },
+        headers: getHeader(token),
         body: jsonEncode(data),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Right(jsonDecode(response.body));
+      final body = res.body.isEmpty ? "{}" : res.body;
+      final Map<String, dynamic> json = jsonDecode(body);
+
+      print("res---------===");
+      print(res.body);
+      print(json);
+      print("res---------===");
+      // success
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return Right(json);
+      }
+
+      // validation errors (Laravel)
+      if (res.statusCode == 422) {
+        return Right(json);
+      }
+
+      // unauthorized
+      if (res.statusCode == 401) {
+        return const Left(StatusRequest.failure);
       }
 
       return const Left(StatusRequest.serverFailure);
-    } catch (_) {
+    } catch (e,track) {
+      print("error from cache crud-------");
+      print(e);
+      print(track);
+      print("error from cache crud-----");
+
       return const Left(StatusRequest.serverFailure);
     }
   }

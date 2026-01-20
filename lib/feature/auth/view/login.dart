@@ -4,6 +4,7 @@ import 'package:nutri_guide/feature/auth/controller/login_controller.dart';
 import 'package:nutri_guide/feature/auth/widget/logo_auth.dart';
 import 'package:nutri_guide/feature/auth/widget/text_signup.dart';
 
+import '../../../core/class/status_request.dart';
 import '../../../core/shared/widgets/global_button.dart';
 import '../../../core/shared/widgets/text_form_field.dart';
 
@@ -37,13 +38,30 @@ class Login extends GetView<LoginController> {
                 keyboardType: TextInputType.text,
                 obscureText: true,
               ),
-              GlobalButton(textButton: 'login'.tr, onPress: () {
-                controller.login();
-              }),
+              GetBuilder<LoginController>(
+                builder: (controller) => GlobalButton(
+                  textButton: "login".tr,
+                  isLoading: controller.statusRequest == StatusRequest.loading,
+                  onPress: () => controller.login(),
+                ),
+              ),
+
+
               SizedBox(height: 30),
-              TextSignup(onTapFun: (){
-              controller.goToSignup();
-              })
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                TextSignup(onTapFun: (){
+                  controller.goToSignup();
+                }),
+
+                TextButton(onPressed: (){
+                controller.goToForget();
+                }, child: Text("forget_password".tr))
+
+
+              ],)
+
             ],
           ),
         ),

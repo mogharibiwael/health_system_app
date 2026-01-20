@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:nutri_guide/feature/Home/view/home.dart';
+import 'package:nutri_guide/feature/auth/view/forget_password.dart';
 import 'package:nutri_guide/feature/auth/view/login.dart';
 import 'package:nutri_guide/feature/auth/view/signup.dart';
 
@@ -19,6 +21,16 @@ abstract class AppPages {
       name: AppRoute.signUp,
       page: () => Signup(),
       binding: SignupBinding(),
+    ),
+    GetPage(
+      name: AppRoute.forgotPassword,
+      page: () => ForgotPasswordPage(),
+      bindings: [ForgotBinding()]
+    ),
+    GetPage(
+      name: AppRoute.home,
+      page: () => HomePage(),
+      bindings: [HomeBinding()]
     ),
   ];
 }

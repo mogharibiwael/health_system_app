@@ -10,17 +10,19 @@ import '../../../core/function/show_dialog.dart';
 import '../../../core/service/serviecs.dart';
 
 class LoginController extends GetxController {
-
   late TextEditingController emailController;
   late TextEditingController passwordController;
 
   final LoginData loginData = LoginData(Get.find());
   final MyServices myServices = Get.find();
 
-  StatusRequest statusRequest = StatusRequest.loading;
+  StatusRequest statusRequest = StatusRequest.success; // start idle
+
+  bool get isLoading => statusRequest == StatusRequest.loading;
 
   Future<void> login() async {
-    // ✅ Validate fields first
+    if (isLoading) return; // prevent double tap
+
     if (emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty) {
       showAwesomeDialog(
@@ -43,17 +45,12 @@ class LoginController extends GetxController {
 
     response.fold(
           (l) {
-        // l is StatusRequest in your Either
-        statusRequest = l;
-
-        // ✅ Offline / Server / Generic
+        statusRequest = l; // failure / offline / serverFailure
         String msg = "Invalid email or password";
         if (l == StatusRequest.offlineFailure) {
           msg = "No internet connection";
         } else if (l == StatusRequest.serverFailure) {
           msg = "Server error, try again later";
-        } else if (l == StatusRequest.failure) {
-          msg = "Invalid email or password";
         }
 
         showAwesomeDialog(
@@ -66,22 +63,21 @@ class LoginController extends GetxController {
       },
           (r) async {
         try {
-          // ✅ Token
           final token = r['token'] ?? r['access_token'];
           if (token == null || token.toString().isEmpty) {
+            statusRequest = StatusRequest.failure;
+            update();
             showAwesomeDialog(
               type: DialogType.error,
               title: "Login Failed",
               desc: "Token not returned from server",
             );
-            statusRequest = StatusRequest.failure;
-            update();
             return;
           }
 
-          await myServices.sharedPreferences.setString("token", token.toString());
+          await myServices.sharedPreferences
+              .setString("token", token.toString());
 
-          // ✅ User (optional)
           if (r['user'] != null) {
             await myServices.sharedPreferences.setString(
               "user",
@@ -92,32 +88,29 @@ class LoginController extends GetxController {
           statusRequest = StatusRequest.success;
           update();
 
-          // ✅ Success dialog then navigate
           showAwesomeDialog(
             type: DialogType.success,
             title: "Success",
             desc: "Login successful",
             dismissOnTouchOutside: false,
-            onOk: () {
-              Get.offAllNamed(AppRoute.home);
-            },
+            onOk: () => Get.offAllNamed(AppRoute.home),
           );
         } catch (_) {
+          statusRequest = StatusRequest.failure;
+          update();
           showAwesomeDialog(
             type: DialogType.error,
             title: "Error",
             desc: "Something went wrong while saving session",
+            dismissOnTouchOutside: false,
           );
-          statusRequest = StatusRequest.failure;
-          update();
         }
       },
     );
   }
 
-  goToSignup(){
-    Get.toNamed(AppRoute.signUp);
-  }
+  goToSignup() => Get.toNamed(AppRoute.signUp);
+  goToForget() => Get.toNamed(AppRoute.forgotPassword);
 
   @override
   void onInit() {
@@ -126,10 +119,5 @@ class LoginController extends GetxController {
     super.onInit();
   }
 
-  @override
-  void onClose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.onClose();
-  }
+
 }
