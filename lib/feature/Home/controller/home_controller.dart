@@ -1,16 +1,67 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:nutri_guide/core/service/serviecs.dart';
+import 'package:nutri_guide/core/permissions/permissions.dart';
+import 'package:nutri_guide/core/class/status_request.dart';
+import 'package:nutri_guide/core/function/handel_data.dart';
+import 'package:nutri_guide/feature/ads/data/ads_data.dart';
+import 'package:nutri_guide/feature/ads/model/ad_model.dart';
+
+import '../../../core/routes/app_route.dart';
 
 class HomeController extends GetxController {
   final MyServices myServices = Get.find();
+  late final Permissions permissions;
+  final AdsData adsData = AdsData(Get.find());
 
   Map<String, dynamic>? user;
+
+  /// Ads for top carousel (public/ads)
+  final List<AdModel> ads = [];
+  StatusRequest adsStatus = StatusRequest.success;
 
   @override
   void onInit() {
     super.onInit();
+    permissions = Permissions(myServices);
     loadUser();
+    fetchAds();
+  }
+
+  Future<void> fetchAds() async {
+    adsStatus = StatusRequest.loading;
+    update();
+
+    final res = await adsData.fetchAds();
+    res.fold((l) {
+      adsStatus = l;
+      update();
+    }, (r) {
+      adsStatus = StatusRequest.success;
+      List rawList = [];
+      if (r["data"] is List) {
+        rawList = r["data"] as List;
+      } else if (r["ads"] is List) {
+        rawList = r["ads"] as List;
+      } else if (r["advertisements"] is List) {
+        rawList = r["advertisements"] as List;
+      } else if (r["data"] is Map && (r["data"] as Map)["data"] is List) {
+        rawList = (r["data"] as Map)["data"] as List;
+      }
+      ads.clear();
+      for (final e in rawList) {
+        if (e is Map<String, dynamic>) {
+          try {
+            ads.add(AdModel.fromJson(e));
+          } catch (_) {}
+        } else if (e is Map) {
+          try {
+            ads.add(AdModel.fromJson(Map<String, dynamic>.from(e)));
+          } catch (_) {}
+        }
+      }
+      update();
+    });
   }
 
   void loadUser() {
@@ -22,6 +73,8 @@ class HomeController extends GetxController {
     }
     try {
       user = jsonDecode(userStr) as Map<String, dynamic>;
+      print(myServices.sharedPreferences.getString("token"));
+      print(user);
     } catch (_) {
       user = null;
     }
@@ -33,13 +86,19 @@ class HomeController extends GetxController {
   String get userPhone => (user?["phone"] ?? "-").toString();
   String get userRole  => (user?["role"] ?? "-").toString();
 
+  /// True when the patient has subscribed to at least one doctor.
+  bool get isSubscribed => myServices.subscribedDoctorIds.isNotEmpty;
+
   void goDoctors() => Get.toNamed("/doctors");
   void goTips() => Get.toNamed("/tips");
   void goBmi() => Get.toNamed("/bmi");
+  void goForums() => Get.toNamed(AppRoute.forums);
+  void goConsultations() => Get.toNamed(AppRoute.consultations);
+  void goDiet() => Get.toNamed(AppRoute.diet);
 
-  void logout() async {
-    await myServices.sharedPreferences.remove("token");
-    await myServices.sharedPreferences.remove("user");
-    Get.offAllNamed("/login");
+
+  Future<void> logout() async {
+    await myServices.clearSession();
+    Get.offAllNamed(AppRoute.login);
   }
 }

@@ -72,7 +72,11 @@ class Signup extends GetView<SignupController> {
                 items: c.roleItems,
                 enabled: c.statusRequest != StatusRequest.loading,
                 onChanged: (v) {
+                  print("v------");
+                  print(v);
+                  print("v------");
                   c.selectedRole = v; // ممكن null
+                  c.selectedType = v!; // ممكن null
                   c.update();
                 },
               ),
@@ -81,31 +85,56 @@ class Signup extends GetView<SignupController> {
               const SizedBox(height: 12),
 
               // password
+              // password
               CustomTextFormField(
                 controller: c.passwordController,
                 keyboardType: TextInputType.text,
                 label: "password".tr,
                 hintText: "passwordHint".tr,
                 icon: Icons.lock_outline,
-                obscureText: true,
+                obscureText: c.isPasswordHidden,
+                suffixIcon: IconButton(
+                  onPressed: c.statusRequest == StatusRequest.loading ? null : c.togglePassword,
+                  icon: Icon(
+                    c.isPasswordHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  ),
+                ),
               ),
 
-              // confirm password
+// confirm password
               CustomTextFormField(
                 controller: c.confirmPasswordController,
                 keyboardType: TextInputType.text,
                 label: "confirmPassword".tr,
                 hintText: "confirmPasswordHint".tr,
                 icon: Icons.lock_outline,
-                obscureText: true,
+                obscureText: c.isConfirmPasswordHidden,
+                suffixIcon: IconButton(
+                  onPressed: c.statusRequest == StatusRequest.loading ? null : c.toggleConfirmPassword,
+                  icon: Icon(
+                    c.isConfirmPasswordHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  ),
+                ),
               ),
+
 
               const SizedBox(height: 16),
 
               GlobalButton(
-                textButton: "signupButton".tr,
-                onPress: () => c.register(),
+                textButton: c.statusRequest == StatusRequest.loading
+                    ? "pleaseWait".tr
+                    : "signupButton".tr,
+                onPress: c.statusRequest == StatusRequest.loading ? null : c.register,
               ),
+
+              const SizedBox(height: 12),
+
+              if (c.statusRequest == StatusRequest.loading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: CircularProgressIndicator(),
+                ),
+
 
               const SizedBox(height: 24),
 

@@ -1,25 +1,17 @@
-
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/routes/app_route.dart';
 
 class SplashController extends GetxController {
-
-
-  RxBool isLoading = true.obs;
-
-
-  // Observables for UI updates
-  RxString imageUrl = ''.obs;
-
   @override
   void onInit() {
     super.onInit();
+    _goNext();
   }
 
-  Future<void> fetchSplashData() async {
-
+  void _goNext() {
+    // عرض السبلّاش قليلاً ثم الانتقال إلى gate
+    Future.delayed(const Duration(milliseconds: 600), () {
+      Get.offAllNamed(AppRoute.gate);
+    });
   }
-
-
-
 }

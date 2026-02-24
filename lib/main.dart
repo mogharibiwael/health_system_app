@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       translations: Translation(),
       locale: controller.language,
-      title: 'Wael',
+      title: 'nutri gide',
       theme: themeData,
       initialRoute: AppRoute.splash,
       initialBinding: InitBinding(),

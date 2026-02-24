@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,6 +7,7 @@ import 'package:nutri_guide/core/routes/app_route.dart';
 import 'package:nutri_guide/feature/auth/data/login_data.dart';
 import '../../../core/function/show_dialog.dart';
 import '../../../core/service/serviecs.dart';
+
 
 class LoginController extends GetxController {
   late TextEditingController emailController;
@@ -45,6 +45,7 @@ class LoginController extends GetxController {
 
     response.fold(
           (l) {
+
         statusRequest = l; // failure / offline / serverFailure
         String msg = "Invalid email or password";
         if (l == StatusRequest.offlineFailure) {
@@ -55,47 +56,63 @@ class LoginController extends GetxController {
 
         showAwesomeDialog(
           type: DialogType.error,
-          title: "Login Failed",
+          title: "login_failed".tr,
           desc: msg,
         );
 
         update();
       },
           (r) async {
+
         try {
+          // ❗️Handle forbidden / custom backend message
+          if (r is Map && r.containsKey("message") && !r.containsKey("token")) {
+            statusRequest = StatusRequest.failure;
+            update();
+
+            showAwesomeDialog(
+              type: DialogType.error,
+              title: "login_failed".tr,
+              desc: r["message"].toString(),
+            );
+            return;
+          }
+
           final token = r['token'] ?? r['access_token'];
-          if (token == null || token.toString().isEmpty) {
+          if (token == null || token.toString().trim().isEmpty) {
             statusRequest = StatusRequest.failure;
             update();
             showAwesomeDialog(
               type: DialogType.error,
-              title: "Login Failed",
+              title: "login_failed".tr,
               desc: "Token not returned from server",
             );
             return;
           }
 
-          await myServices.sharedPreferences
-              .setString("token", token.toString());
+          final userMap = (r['user'] is Map)
+              ? Map<String, dynamic>.from(r['user'])
+              : <String, dynamic>{};
 
-          if (r['user'] != null) {
-            await myServices.sharedPreferences.setString(
-              "user",
-              jsonEncode(r['user']),
-            );
-          }
+          // ✅ Laravel returns "role": doctor/patient
+          final userType = (userMap['type'] ?? 'patient')
+              .toString()
+              .trim()
+              .toLowerCase();
+
+          await myServices.saveSession(
+            token: token.toString(),
+            type: userType, // store doctor/patient in "type"
+            user: userMap.isEmpty ? null : userMap,
+          );
 
           statusRequest = StatusRequest.success;
           update();
 
-          showAwesomeDialog(
-            type: DialogType.success,
-            title: "Success",
-            desc: "Login successful",
-            dismissOnTouchOutside: false,
-            onOk: () => Get.offAllNamed(AppRoute.home),
-          );
-        } catch (_) {
+          // ✅ Only go to gate. Middleware will redirect to correct page.
+          Get.offAllNamed(AppRoute.gate);
+
+        } catch (e) {
           statusRequest = StatusRequest.failure;
           update();
           showAwesomeDialog(
@@ -105,7 +122,9 @@ class LoginController extends GetxController {
             dismissOnTouchOutside: false,
           );
         }
-      },
+      }
+
+      ,
     );
   }
 

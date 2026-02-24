@@ -8,6 +8,8 @@ class CustomTextFormField extends StatelessWidget {
   IconData icon;
   TextInputType keyboardType;
   bool obscureText;
+  final Widget? suffixIcon;
+
 
   CustomTextFormField({
     super.key,
@@ -16,7 +18,8 @@ class CustomTextFormField extends StatelessWidget {
     required this.hintText,
     required this.icon,
     required this.keyboardType,
-    required this.obscureText
+    required this.obscureText,
+     this.suffixIcon
   });
 
   @override
@@ -27,10 +30,11 @@ class CustomTextFormField extends StatelessWidget {
         controller: controller,
         keyboardType:keyboardType ,
         obscureText: obscureText,
+
         decoration: InputDecoration(
           label: Text(label),
           hintText: hintText,
-
+          suffix: suffixIcon,
           floatingLabelBehavior: FloatingLabelBehavior.always,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
