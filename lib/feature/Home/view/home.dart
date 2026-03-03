@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nutri_guide/core/class/status_request.dart';
+import 'package:nutri_guide/core/constant/asset.dart';
 import 'package:nutri_guide/core/constant/theme/colors.dart';
+import 'package:nutri_guide/core/shared/widgets/app_bar.dart';
 import 'package:nutri_guide/core/shared/widgets/drawer.dart';
 import 'package:nutri_guide/feature/ads/model/ad_model.dart';
 
@@ -10,213 +12,283 @@ import '../../home/controller/home_controller.dart';
 class HomePage extends GetView<HomeController> {
   const HomePage({super.key});
 
+  static const Color _lightLavender = Color(0xffe4e0ec);
+  static const Color _darkPurple = Color(0xff4a3f6a);
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
-      builder: (_) => Scaffold(
-        appBar: AppBar(
-          title: Text("homeTitle".tr),
-        ),
-        drawer: HomeDrawer(controller: controller),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          children: [
-            // ─── Top: Ads carousel (public/ads) ───
-            _AdsCarousel(controller: controller),
-            const SizedBox(height: 20),
-
-            // ─── Always for user: Doctors, BMI/BMR, Tips ───
-            _HomeActionCard(
-              icon: Icons.medical_services_outlined,
-              title: "doctorsList".tr,
-              subtitle: "doctorsListDesc".tr,
-              onTap: controller.goDoctors,
+      builder: (_) => SafeArea(
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: CustomAppBar(
+            title: "homeTitle".tr,
+            showLogo: false,
+            leading: Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu, color: Color(0xff4a3f6a), size: 26),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              ),
             ),
-            const SizedBox(height: 12),
-            _HomeActionCard(
-              icon: Icons.lightbulb_outline,
-              title: "tips".tr,
-              subtitle: "tipsDesc".tr,
-              onTap: controller.goTips,
-            ),
-            const SizedBox(height: 12),
-            _HomeActionCard(
-              icon: Icons.monitor_heart_outlined,
-              title: "bmiCalc".tr,
-              subtitle: "bmiCalcDesc".tr,
-              onTap: controller.goBmi,
-            ),
-
-            // ─── Only when subscribed with a doctor ───
-            if (controller.isSubscribed) ...[
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  "subscribedFeatures".tr,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade700,
+          ),
+          drawer: HomeDrawer(controller: controller),
+          body: Row(
+            children: [
+              // Main content
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    // borderRadius: const BorderRadius.only(
+                    //   topLeft: Radius.circular(24),
+                    //   bottomLeft: Radius.circular(24),
+                    // ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.06),
+                        blurRadius: 12,
+                        offset: const Offset(-2, 0),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 24),
+                        // ─── Ads carousel (placeholder when API empty) ───
+                        _buildAdsCarousel(controller),
+                        const SizedBox(height: 28),
+                        // ─── 7 buttons ───
+                        _HomeMenuButton(
+                          title: "myDiet".tr,
+                          icon: Icons.restaurant_menu_outlined,
+                          onTap: controller.goDiet,
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeMenuButton(
+                          title: "tips".tr,
+                          icon: Icons.lightbulb_outline,
+                          onTap: controller.goTips,
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeMenuButton(
+                          title: "bmiCalc".tr,
+                          icon: Icons.monitor_weight_outlined,
+                          onTap: controller.goBmi,
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeMenuButton(
+                          title: "doctorsList".tr,
+                          icon: Icons.medical_services_outlined,
+                          onTap: controller.goDoctors,
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeMenuButton(
+                          title: "settings".tr,
+                          icon: Icons.settings_outlined,
+                          onTap: controller.goSettings,
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeMenuButton(
+                          title: "stepCounter".tr,
+                          icon: Icons.directions_walk,
+                          onTap: controller.goStepCounter,
+                        ),
+                        const SizedBox(height: 12),
+                        _HomeMenuButton(
+                            title: "spiritualNutrition".tr,
+                          icon: Icons.self_improvement,
+                          onTap: controller.goSpiritualNutrition,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              _HomeActionCard(
-                icon: Icons.forum_outlined,
-                title: "forums".tr,
-                subtitle: "forumsDesc".tr,
-                onTap: controller.goForums,
-              ),
-              const SizedBox(height: 12),
-              _HomeActionCard(
-                icon: Icons.event_note_outlined,
-                title: "consultations".tr,
-                subtitle: "consultationsDesc".tr,
-                onTap: controller.goConsultations,
-              ),
-              const SizedBox(height: 12),
-              _HomeActionCard(
-                icon: Icons.restaurant_menu_outlined,
-                title: "myDiet".tr,
-                subtitle: "myDietDesc".tr,
-                onTap: controller.goDiet,
-              ),
+              // ─── Purple gradient strip (right edge) ───
+              // Container(
+              //   width: 8,
+              //   decoration: BoxDecoration(
+              //     gradient: LinearGradient(
+              //       colors: [
+              //         AppColor.primary.withOpacity(0.3),
+              //         AppColor.primary.withOpacity(0.6),
+              //       ],
+              //       begin: Alignment.topCenter,
+              //       end: Alignment.bottomCenter,
+              //     ),
+              //   ),
+              // ),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
-/// Ads carousel at top (public/ads)
-class _AdsCarousel extends StatelessWidget {
-  final HomeController controller;
-
-  const _AdsCarousel({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    if (controller.adsStatus == StatusRequest.loading && controller.ads.isEmpty) {
-      return SizedBox(
-        height: 160,
-        child: Center(
-          child: const SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(strokeWidth: 2),
+  Widget _buildHeader(BuildContext context) {
+    final isAr = Get.locale?.languageCode == 'ar';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: _lightLavender,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              "homeTitle".tr,
+              textAlign: isAr ? TextAlign.right : TextAlign.left,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: _darkPurple,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Scaffold.of(context).openDrawer(),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Image.asset(
+                    ImageAssets.logo,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdsCarousel(HomeController c) {
+    if (c.adsStatus == StatusRequest.loading) {
+      return SizedBox(
+        height: 180,
+        child: Center(
+          child: CircularProgressIndicator(color: AppColor.primary),
         ),
       );
     }
-
-    if (controller.ads.isEmpty) {
-      return const SizedBox.shrink();
+    if (c.ads.isEmpty) {
+      return Image.asset(
+        ImageAssets.logo,
+        height: 180,
+        fit: BoxFit.contain,
+      );
     }
+    return _AdsCarousel(ads: c.ads);
+  }
+}
 
+class _AdsCarousel extends StatefulWidget {
+  final List<AdModel> ads;
+
+  const _AdsCarousel({required this.ads});
+
+  @override
+  State<_AdsCarousel> createState() => _AdsCarouselState();
+}
+
+class _AdsCarouselState extends State<_AdsCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _pageController.addListener(() {
+      final p = _pageController.page?.round() ?? 0;
+      if (p != _currentPage) setState(() => _currentPage = p);
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  String _adTitle(AdModel ad) {
+    if (ad.title != null && ad.title!.trim().isNotEmpty) return ad.title!;
+    if (ad.type != null && ad.type!.trim().isNotEmpty) return ad.type!;
+    if (ad.description != null && ad.description!.trim().isNotEmpty) {
+      final d = ad.description!.trim();
+      return d.length > 40 ? "${d.substring(0, 40)}..." : d;
+    }
+    return "Ad";
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
-      height: 168,
-      child: PageView.builder(
-        controller: PageController(viewportFraction: 0.92),
-        itemCount: controller.ads.length,
-        itemBuilder: (context, index) {
-          final ad = controller.ads[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _AdCard(ad: ad),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _AdCard extends StatelessWidget {
-  final AdModel ad;
-
-  const _AdCard({required this.ad});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      borderRadius: BorderRadius.circular(16),
-      elevation: 2,
-      shadowColor: Colors.black26,
-      child: InkWell(
-        onTap: () {
-          if (ad.link != null && ad.link!.isNotEmpty) {
-            // Optionally launch URL: url_launcher
-          }
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [
-                AppColor.primary.withOpacity(0.15),
-                AppColor.primary.withOpacity(0.05),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(
-              color: AppColor.primary.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: ad.imageUrl != null && ad.imageUrl!.isNotEmpty
-                ? Image.network(
-                    ad.imageUrl!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (_, __, ___) => _AdPlaceholder(ad: ad),
-                  )
-                : _AdPlaceholder(ad: ad),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AdPlaceholder extends StatelessWidget {
-  final AdModel ad;
-
-  const _AdPlaceholder({required this.ad});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      alignment: Alignment.centerLeft,
+      height: 180,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (ad.title != null && ad.title!.isNotEmpty)
-            Text(
-              ad.title!,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.ads.length,
+              itemBuilder: (_, i) {
+                final ad = widget.ads[i];
+                return _AdCard(ad: ad, title: _adTitle(ad));
+              },
             ),
-          if (ad.description != null && ad.description!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              ad.description!,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
+          ),
+          if (widget.ads.length > 1) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.ads.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: i == _currentPage
+                        ? const LinearGradient(
+                            colors: [Color(0xff920787), Color(0xffa80695)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: i != _currentPage ? Colors.grey.shade300 : null,
+                  ),
+                ),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],
@@ -225,58 +297,217 @@ class _AdPlaceholder extends StatelessWidget {
   }
 }
 
-
-
-class _HomeActionCard extends StatelessWidget {
-  final IconData icon;
+class _AdCard extends StatelessWidget {
+  final AdModel ad;
   final String title;
-  final String subtitle;
-  final VoidCallback onTap;
 
-  const _HomeActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+  const _AdCard({required this.ad, required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Row(
+    final url = ad.imageUrl;
+    final hasImage = url != null && url.isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.primary.withOpacity(0.01),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+            spreadRadius: -1,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColor.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
+            // Image layer - best display
+            if (hasImage)
+              Image.network(
+                url!,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                gaplessPlayback: true,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildPlaceholder(),
+                      Center(
+                        child: SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColor.primary.withOpacity(0.8),
+                            ),
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                errorBuilder: (_, __, ___) => _buildPlaceholder(),
+              )
+            else
+              _buildPlaceholder(),
+            // Overlay - optimized gradient for image visibility + title readability
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.grey.withOpacity(0.12),
+                      Colors.grey.withOpacity(0.55),
+                      Color(0xff7f4fab).withOpacity(0.2),
+                    ],
+                    stops: const [0.0, 0.4, 0.78, 1.0],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    height: 1.35,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.5),
+                        offset: const Offset(0, 1),
+                        blurRadius: 4,
+                      ),
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        offset: const Offset(0, 2),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              child: Icon(icon, color: AppColor.primary),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: TextStyle(color: Colors.grey.shade700)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColor.primary.withOpacity(0.14),
+            AppColor.primary.withOpacity(0.06),
+            AppColor.primary.withOpacity(0.02),
+          ],
+          stops: const [0.0, 0.5, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Image.asset(
+          ImageAssets.logo,
+          height: 90,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMenuButton extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _HomeMenuButton({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
+
+  static const Color _lightLavender = Color(0xffe4e0ec);
+  static const Color _darkPurple = Color(0xff4a3f6a);
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = Get.locale?.languageCode == 'ar';
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _lightLavender,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+            children: [
+              if (isAr) ...[
+                Icon(icon, color: AppColor.primary, size: 28),
+                const SizedBox(width: 16),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: isAr ? TextAlign.right : TextAlign.left,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _darkPurple,
+                  ),
+                ),
+              ),
+              if (!isAr) ...[
+                const SizedBox(width: 16),
+                Icon(icon, color: AppColor.primary, size: 28),
+              ],
+            ],
+          ),
+        ),
+      ),
+    )
     );
   }
 }

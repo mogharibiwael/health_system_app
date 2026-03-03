@@ -4,15 +4,18 @@ import 'package:nutri_guide/core/constant/theme/theme.dart';
 import 'package:nutri_guide/core/localization/controller.dart';
 import 'package:nutri_guide/core/localization/translation.dart';
 import 'package:nutri_guide/core/routes/app_route.dart';
+import 'package:nutri_guide/core/service/notification_service.dart';
 import 'package:nutri_guide/core/service/serviecs.dart';
 
 import 'core/routes/binding.dart';
 import 'core/routes/route.dart';
 
 void main() async {
-  // debugRepaintRainbowEnabled=true;
   WidgetsFlutterBinding.ensureInitialized();
   await initialServices();
+  final notif = NotificationService();
+  await notif.initialize();
+  await notif.rescheduleStoredReminders();
   runApp(const MyApp());
 }
 

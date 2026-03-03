@@ -17,12 +17,15 @@ class TipsController extends GetxController {
   int currentPage = 1;
   bool hasNextPage = false;
   bool isLoadingMore = false;
+  int? categoryId;
 
   String? get token => myServices.sharedPreferences.getString("token");
 
   @override
   void onInit() {
     super.onInit();
+    final args = Get.arguments as Map?;
+    categoryId = args?["categoryId"] as int?;
     fetchFirstPage();
   }
 
@@ -33,7 +36,7 @@ class TipsController extends GetxController {
     update();
 
     final Either<StatusRequest, Map<String, dynamic>> res =
-    await tipsData.fetchTips(page: currentPage, token: token);
+        await tipsData.fetchTips(page: currentPage, token: token, categoryId: categoryId);
 
     res.fold((l) {
       statusRequest = l;
@@ -62,7 +65,7 @@ class TipsController extends GetxController {
 
     final nextPage = currentPage + 1;
 
-    final res = await tipsData.fetchTips(page: nextPage, token: token);
+    final res = await tipsData.fetchTips(page: nextPage, token: token, categoryId: categoryId);
 
     res.fold((l) {
       // keep current list, only stop load-more

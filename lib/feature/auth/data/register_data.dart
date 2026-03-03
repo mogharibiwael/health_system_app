@@ -6,6 +6,9 @@ class SignupData {
   final Crud crud;
   SignupData(this.crud);
 
+  /// User payload: name, email, password, password_confirmation
+  /// Doctor payload: + type, phone, gender, degree (file), cv (file), consultation_fee
+  /// CV must be pdf, doc, or docx. Degree can be image or document.
   Future<dynamic> register({
     required String name,
     required String email,
@@ -13,18 +16,48 @@ class SignupData {
     required String passwordConfirmation,
     String? phone,
     String? type,
-    String? role,
+    String? gender,
+    String? degreeFilePath,
+    String? cvFilePath,
+    double? consultationFee,
   }) async {
-    final body = {
+    final fields = <String, String>{
       "name": name,
       "email": email,
       "password": password,
       "password_confirmation": passwordConfirmation,
-      if (phone != null) "phone": phone,
-      if (type != null) "type": type,
-      if (role != null) "role": role,
     };
 
+    if (type == "doctor") {
+      if (phone != null && phone.isNotEmpty) fields["phone"] = phone;
+      if (gender != null && gender.isNotEmpty) fields["gender"] = gender;
+      if (consultationFee != null) fields["consultation_fee"] = consultationFee.toString();
+      fields["type"] = "doctor";
+    }
+
+    final files = <MultipartFileField>[];
+    if (type == "doctor") {
+      if (degreeFilePath != null && degreeFilePath.isNotEmpty) {
+        files.add(MultipartFileField(fieldName: "degree", filePath: degreeFilePath));
+      }
+      if (cvFilePath != null && cvFilePath.isNotEmpty) {
+        files.add(MultipartFileField(fieldName: "cv", filePath: cvFilePath));
+      }
+    }
+
+    if (files.isNotEmpty) {
+      final response = await crud.postMultipart(
+        ApiLinks.register,
+        fields: fields,
+        files: files,
+      );
+      return response.fold((l) => l, (r) => r);
+    }
+
+    final body = <String, dynamic>{};
+    for (final e in fields.entries) {
+      body[e.key] = e.value;
+    }
     final response = await crud.postData(ApiLinks.register, body);
     return response.fold((l) => l, (r) => r);
   }

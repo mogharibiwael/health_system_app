@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:nutri_guide/core/constant/api_link.dart';
 import 'package:nutri_guide/core/service/serviecs.dart';
 import 'package:nutri_guide/core/permissions/permissions.dart';
 import 'package:nutri_guide/core/class/status_request.dart';
@@ -48,15 +49,22 @@ class HomeController extends GetxController {
       } else if (r["data"] is Map && (r["data"] as Map)["data"] is List) {
         rawList = (r["data"] as Map)["data"] as List;
       }
+      final storageBase = ApiLinks.storageBase;
       ads.clear();
       for (final e in rawList) {
         if (e is Map<String, dynamic>) {
           try {
-            ads.add(AdModel.fromJson(e));
+            final ad = AdModel.fromJson(e, storageBase: storageBase);
+            if (ad.isActive && ad.imageUrl != null && ad.imageUrl!.isNotEmpty) {
+              ads.add(ad);
+            }
           } catch (_) {}
         } else if (e is Map) {
           try {
-            ads.add(AdModel.fromJson(Map<String, dynamic>.from(e)));
+            final ad = AdModel.fromJson(Map<String, dynamic>.from(e), storageBase: storageBase);
+            if (ad.isActive && ad.imageUrl != null && ad.imageUrl!.isNotEmpty) {
+              ads.add(ad);
+            }
           } catch (_) {}
         }
       }
@@ -95,6 +103,10 @@ class HomeController extends GetxController {
   void goForums() => Get.toNamed(AppRoute.forums);
   void goConsultations() => Get.toNamed(AppRoute.consultations);
   void goDiet() => Get.toNamed(AppRoute.diet);
+
+  void goStepCounter() => Get.toNamed("/step-counter");
+  void goSpiritualNutrition() => Get.toNamed("/spiritual-nutrition");
+  void goSettings() => Get.toNamed("/settings");
 
 
   Future<void> logout() async {

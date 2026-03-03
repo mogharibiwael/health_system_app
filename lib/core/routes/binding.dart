@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:nutri_guide/core/class/crud.dart';
 import 'package:nutri_guide/doctorApp/feature/home/controller/doctor_patients_controller.dart';
 import 'package:nutri_guide/feature/auth/controller/forget_password_controller.dart';
+import 'package:nutri_guide/feature/auth/controller/verify_email_controller.dart';
 import 'package:nutri_guide/feature/auth/controller/login_controller.dart';
 import 'package:nutri_guide/feature/auth/controller/signup_controller.dart';
 import 'package:nutri_guide/feature/chat/controller/patient_profile_controller.dart';
@@ -17,8 +18,15 @@ import '../../feature/home/controller/home_controller.dart';
 import '../../feature/forum/controller/forum_posts_controller.dart';
 import '../../feature/forum/controller/forums_controller.dart';
 import '../../feature/tips/controller/tips_controller.dart';
+import '../../feature/tips/controller/tips_main_controller.dart';
+import '../../feature/athkar/controller/spiritual_nutrition_controller.dart';
+import '../../feature/athkar/controller/athkar_list_controller.dart';
+import '../../feature/settings/controller/settings_controller.dart';
+import '../../feature/settings/controller/edit_profile_controller.dart';
+import '../../feature/settings/controller/reminders_controller.dart';
 import '../../feature/consultations/controller/consultations_controller.dart';
 import '../../feature/diet/controller/diet_controller.dart';
+import '../../feature/step_counter/controller/step_counter_controller.dart';
 
 class InitBinding extends Bindings {
   @override
@@ -47,6 +55,12 @@ class ForgotBinding extends Bindings {
     Get.lazyPut(() => ForgotPasswordController());
   }
 }
+class VerifyEmailBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => VerifyEmailController());
+  }
+}
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
@@ -67,6 +81,49 @@ class TipsBinding extends Bindings {
     Get.lazyPut(() => TipsController(), fenix: true);
   }
 }
+
+class TipsMainBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => TipsMainController(), fenix: true);
+  }
+}
+
+class SpiritualNutritionBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => SpiritualNutritionController());
+  }
+}
+
+class AthkarListBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => AthkarListController(), fenix: true);
+  }
+}
+
+class SettingsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => SettingsController());
+  }
+}
+
+class EditProfileBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => EditProfileController());
+  }
+}
+
+class RemindersBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => RemindersController());
+  }
+}
+
 class DoctorsBinding extends Bindings {
   @override
   void dependencies() {
@@ -138,6 +195,13 @@ class DietBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => DietController(), fenix: true);
+  }
+}
+
+class StepCounterBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => StepCounterController());
   }
 }
 

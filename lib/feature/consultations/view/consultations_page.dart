@@ -4,6 +4,7 @@ import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
 import '../../../core/permissions/permissions.dart';
 import '../../../core/service/serviecs.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/consultations_controller.dart';
 import '../model/consultation_model.dart';
 
@@ -13,22 +14,22 @@ class ConsultationsPage extends GetView<ConsultationsController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ConsultationsController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text("consultations".tr),
-          centerTitle: true,
-          elevation: 0,
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: "consultations".tr,
+          showBackButton: true,
           actions: [
             if (Permissions(Get.find<MyServices>()).canRequestConsultation)
               IconButton(
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, color: Color(0xff4a3f6a)),
                 onPressed: () => _showRequestDialog(context, c),
               ),
           ],
         ),
         body: _buildBody(c),
       ),
-    );
+    ));
   }
 
   Widget _buildBody(ConsultationsController c) {

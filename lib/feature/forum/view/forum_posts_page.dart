@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/forum_posts_controller.dart';
 import '../model/forum_post_model.dart';
 
@@ -11,11 +12,11 @@ class ForumPostsPage extends GetView<ForumPostsController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ForumPostsController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text(c.forumName.isNotEmpty ? c.forumName : "forumPosts".tr),
-          centerTitle: true,
-          elevation: 0,
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: c.forumName.isNotEmpty ? c.forumName : "forumPosts".tr,
+          showBackButton: true,
           actions: [
             if (!c.hasJoined)
               Padding(
@@ -53,7 +54,7 @@ class ForumPostsPage extends GetView<ForumPostsController> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildBody(ForumPostsController c) {

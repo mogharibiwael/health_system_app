@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/diet_controller.dart';
 import '../model/diet_model.dart';
 
@@ -11,26 +12,26 @@ class DietPage extends GetView<DietController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<DietController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text("myDiet".tr),
-          centerTitle: true,
-          elevation: 0,
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: "myDiet".tr,
+          showBackButton: true,
           actions: [
             IconButton(
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh, color: Color(0xff4a3f6a)),
               onPressed: c.refreshDiet,
             ),
             if (c.canCreateDiet)
               IconButton(
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, color: Color(0xff4a3f6a)),
                 onPressed: () => _showCreateDialog(context, c),
               ),
           ],
         ),
         body: _buildBody(c),
       ),
-    );
+    ));
   }
 
   Widget _buildBody(DietController c) {

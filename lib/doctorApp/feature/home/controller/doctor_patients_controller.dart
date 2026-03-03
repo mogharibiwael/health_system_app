@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/class/status_request.dart';
@@ -19,6 +20,8 @@ class DoctorPatientsController extends GetxController {
   StatusRequest statusRequest = StatusRequest.loading;
 
   final List<PatientModel> patients = [];
+  final searchController = TextEditingController();
+  String searchQuery = '';
 
   int currentPage = 1;
   bool hasMore = true;
@@ -26,7 +29,30 @@ class DoctorPatientsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    loadUser();
     fetchPatients(first: true);
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
+  }
+
+  void onSearchChanged(String query) {
+    searchQuery = query.trim();
+    update();
+  }
+
+  List<PatientModel> get filteredPatients {
+    final q = searchQuery.toLowerCase();
+    if (q.isEmpty) return patients;
+    return patients
+        .where((p) =>
+            p.fullname.toLowerCase().contains(q) ||
+            (p.phoneNumber ?? '').contains(q) ||
+            (p.user?.email ?? '').toLowerCase().contains(q))
+        .toList();
   }
 
   Future<void> fetchPatients({bool first = false}) async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nutri_guide/core/class/status_request.dart';
 import 'package:nutri_guide/core/constant/theme/colors.dart';
+import 'package:nutri_guide/core/shared/widgets/app_bar.dart';
 import '../controller/patient_profile_controller.dart';
 
 class PatientProfilePage extends GetView<PatientProfileController> {
@@ -12,9 +13,11 @@ class PatientProfilePage extends GetView<PatientProfileController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<PatientProfileController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text("completeProfile".tr),
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: "completeProfile".tr,
+          showBackButton: true,
         ),
         body: Stack(
           children: [
@@ -145,7 +148,7 @@ class PatientProfilePage extends GetView<PatientProfileController> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

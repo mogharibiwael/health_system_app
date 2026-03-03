@@ -1,4 +1,5 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nutri_guide/core/class/status_request.dart';
@@ -14,18 +15,80 @@ class SignupController extends GetxController {
   late TextEditingController phoneController;
   late TextEditingController passwordController;
   late TextEditingController confirmPasswordController;
+  late TextEditingController dietPriceController;
+  late TextEditingController bankAccountController;
 
   final SignupData signupData = SignupData(Get.find());
 
   StatusRequest statusRequest = StatusRequest.success;
 
-  // Optional fields (backend accepts nullable)
-  String selectedType = "user";     // default in backend is 'user'
-  String? selectedRole="patient";
-
+  String selectedType = "user";
+  String? selectedRole = "patient";
+  String? selectedGender;
 
   bool isPasswordHidden = true;
   bool isConfirmPasswordHidden = true;
+
+  String? degreeFilePath;
+  String? degreeFileName;
+  String? cvFilePath;
+  String? cvFileName;
+
+  /// Pick degree: PDF, DOC, DOCX, or images
+  Future<void> pickDegreeFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+        allowMultiple: false,
+      );
+      if (result != null && result.files.single.path != null) {
+        degreeFilePath = result.files.single.path;
+        degreeFileName = result.files.single.name;
+        update();
+      }
+    } catch (e) {
+      showAwesomeDialog(
+        type: DialogType.error,
+        title: "Error",
+        desc: "Could not pick file: $e",
+      );
+    }
+  }
+
+  /// Pick CV: PDF, DOC, DOCX only (backend requirement)
+  Future<void> pickCvFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx'],
+        allowMultiple: false,
+      );
+      if (result != null && result.files.single.path != null) {
+        cvFilePath = result.files.single.path;
+        cvFileName = result.files.single.name;
+        update();
+      }
+    } catch (e) {
+      showAwesomeDialog(
+        type: DialogType.error,
+        title: "Error",
+        desc: "Could not pick file. CV must be PDF, DOC, or DOCX.",
+      );
+    }
+  }
+
+  void clearDegreeFile() {
+    degreeFilePath = null;
+    degreeFileName = null;
+    update();
+  }
+
+  void clearCvFile() {
+    cvFilePath = null;
+    cvFileName = null;
+    update();
+  }
 
   void togglePassword() {
     isPasswordHidden = !isPasswordHidden;
@@ -41,7 +104,7 @@ class SignupController extends GetxController {
   // final List<String> typeItems = const ["user", "payed"];
   final List<String> roleItems = const ["patient", "doctor"];
 
-  goToLogin() => Get.toNamed(AppRoute.login);
+  goToLogin() => Get.offNamed(AppRoute.login);
 
   Future<void> register() async {
     if (statusRequest == StatusRequest.loading) return; // منع ضغط متكرر
@@ -83,14 +146,36 @@ class SignupController extends GetxController {
     update();
 
     try {
+      double? consultationFee;
+      if (selectedType == "doctor") {
+        final feeStr = dietPriceController.text.trim();
+        if (feeStr.isNotEmpty) consultationFee = double.tryParse(feeStr);
+      }
+
+      if (selectedType == "doctor") {
+        if (cvFilePath == null || cvFilePath!.isEmpty) {
+          showAwesomeDialog(
+            type: DialogType.warning,
+            title: "Validation",
+            desc: "CV is required for doctor registration. Please upload a PDF, DOC, or DOCX file.",
+          );
+          statusRequest = StatusRequest.success;
+          update();
+          return;
+        }
+      }
+
       final res = await signupData.register(
         name: name,
         email: email,
         password: pass,
+        passwordConfirmation: confirm,
         phone: phone.isEmpty ? null : phone,
         type: selectedType,
-        role: selectedRole,
-        passwordConfirmation: confirm,
+        gender: selectedGender,
+        degreeFilePath: selectedType == "doctor" ? degreeFilePath : null,
+        cvFilePath: selectedType == "doctor" ? cvFilePath : null,
+        consultationFee: consultationFee,
       );
 
       print(res);
@@ -131,13 +216,8 @@ class SignupController extends GetxController {
         return;
       }
 
-      showAwesomeDialog(
-        type: DialogType.success,
-        title: "Success",
-        desc: "Account created successfully",
-        dismissOnTouchOutside: false,
-        onOk: () => Get.offAllNamed(AppRoute.login),
-      );
+      // Go directly to verify email - code is sent to user's email by backend
+      Get.offAllNamed(AppRoute.verifyEmail, arguments: {'email': email});
     } finally {
       // رجّع الحالة لو ما انتقلت للصفحة
       if (Get.currentRoute.contains("signup")) {
@@ -155,7 +235,18 @@ class SignupController extends GetxController {
     phoneController = TextEditingController();
     passwordController = TextEditingController();
     confirmPasswordController = TextEditingController();
+    dietPriceController = TextEditingController();
+    bankAccountController = TextEditingController();
+    _applyRoleFromRoute();
     super.onInit();
+  }
+
+  void _applyRoleFromRoute() {
+    final args = Get.arguments;
+    if (args is Map && args['role'] != null) {
+      selectedRole = args['role'] as String;
+      selectedType = selectedRole == 'doctor' ? 'doctor' : 'user';
+    }
   }
 
   @override
@@ -165,6 +256,8 @@ class SignupController extends GetxController {
     phoneController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    dietPriceController.dispose();
+    bankAccountController.dispose();
     super.onClose();
   }
 }

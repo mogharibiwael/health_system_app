@@ -22,6 +22,7 @@ class DietData {
   }
 
   /// POST /api/diet-plans - Create/assign diet plan (for doctors)
+  /// Supports doctor_notes (array of strings) and meals (type, name, macros, servings) per developer_api_guide.
   Future<Either<StatusRequest, Map<String, dynamic>>> createDietPlan({
     required int patientId,
     required int doctorId,
@@ -31,6 +32,7 @@ class DietData {
     required String startDate,
     required String endDate,
     List<Map<String, dynamic>>? meals,
+    List<String>? doctorNotes,
     String? token,
   }) async {
     final body = {
@@ -42,6 +44,7 @@ class DietData {
       "start_date": startDate,
       "end_date": endDate,
       if (meals != null && meals.isNotEmpty) "meals": meals,
+      if (doctorNotes != null && doctorNotes.isNotEmpty) "doctor_notes": doctorNotes,
     };
     return await crud.postData(ApiLinks.dietPlans, body, token: token);
   }

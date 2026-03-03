@@ -9,7 +9,9 @@ class DoctorModel {
   final String? consultationFee;
   final int? yearsOfExperience;
   final int? userId;
-
+  final String? email;
+  final String? phone;
+  final String? bankAccount;
 
   DoctorModel({
     required this.id,
@@ -21,14 +23,17 @@ class DoctorModel {
     required this.rating,
     this.consultationFee,
     this.yearsOfExperience,
-    this.userId
+    this.userId,
+    this.email,
+    this.phone,
+    this.bankAccount,
   });
 
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
+    int _toInt(dynamic v) => v is int ? v : int.tryParse("$v") ?? 0;
     return DoctorModel(
-      id: json["id"] ?? 0,
+      id: _toInt(json["id"]),
       userId: json["user_id"] is int ? json["user_id"] : int.tryParse("${json["user_id"]}"),
-
       name: (json["name"] ?? "-").toString(),
       specialization: json["specialization"]?.toString(),
       bio: json["bio"]?.toString(),
@@ -39,6 +44,9 @@ class DoctorModel {
       yearsOfExperience: json["years_of_experience"] is int
           ? json["years_of_experience"]
           : int.tryParse((json["years_of_experience"] ?? "").toString()),
+      email: json["email"]?.toString() ?? (json["user"] is Map ? (json["user"] as Map)["email"]?.toString() : null),
+      phone: json["phone"]?.toString() ?? json["phone_number"]?.toString() ?? (json["user"] is Map ? (json["user"] as Map)["phone"]?.toString() : null),
+      bankAccount: json["bank_account"]?.toString() ?? (json["user"] is Map ? (json["user"] as Map)["bank_account"]?.toString() : null),
     );
   }
 
@@ -52,5 +60,8 @@ class DoctorModel {
     "rating": rating,
     "consultation_fee": consultationFee,
     "years_of_experience": yearsOfExperience,
+    "email": email,
+    "phone": phone,
+    "bank_account": bankAccount,
   };
 }

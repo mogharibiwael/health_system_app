@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nutri_guide/core/class/status_request.dart';
 import 'package:nutri_guide/core/constant/theme/colors.dart';
-import 'package:nutri_guide/core/routes/app_route.dart';
+import 'package:nutri_guide/core/shared/widgets/app_bar.dart';
 import '../controller/patient_details_controller.dart';
+
+/// Primary color for collapsible card buttons
 
 class PatientDetailsPage extends GetView<PatientDetailsController> {
   const PatientDetailsPage({super.key});
@@ -11,89 +13,279 @@ class PatientDetailsPage extends GetView<PatientDetailsController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<PatientDetailsController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text(c.patient.fullname),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.chat_outlined),
-              tooltip: "Chat",
-              onPressed: () {
-                Get.toNamed(
-                  AppRoute.chat,
-                  arguments: {
-                    "doctor_id": c.patient.userId,
-                    "doctor_name": c.patient.fullname,
-                    "receiver_id": c.patient.userId,
-                    "conversation_id": c.patient.userId,
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _InfoRow("Full Name", c.patient.fullname),
-            _InfoRow("Gender", c.patient.gender ?? "-"),
-            _InfoRow("Height", c.patient.height?.toString() ?? "-"),
-            _InfoRow("Weight", c.patient.weight?.toString() ?? "-"),
-            _InfoRow("Phone", c.patient.phoneNumber ?? "-"),
-            _InfoRow("Birthdate", c.patient.birthdate ?? "-"),
-            _InfoRow("Activity", c.patient.physicalActivity ?? "-"),
-            _InfoRow("Medical", c.patient.medical ?? "-"),
-
-            const SizedBox(height: 20),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
-            _MacrosSection(controller: c),
-            const SizedBox(height: 20),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Get.toNamed(
-                    AppRoute.chat,
-                    arguments: {
-                      "doctor_id": c.patient.userId,
-                      "doctor_name": c.patient.fullname,
-                      "receiver_id": c.patient.userId,
-                      "conversation_id": c.patient.userId,
-                    },
-                  );
-                },
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: Text("Chat with ${c.patient.fullname}"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+      builder: (c) => SafeArea(
+        child: Scaffold(
+          backgroundColor: Colors.grey.shade100,
+          appBar: CustomAppBar(
+            title: c.patient.fullname,
+            showBackButton: true,
+            showLogo: true,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _CollapsibleSection(
+                  label: "patientInformation".tr,
+                  isExpanded: c.isSectionExpanded(1),
+                  onTap: () => c.toggleSection(1),
+                  child: _PatientInfoSection(controller: c),
                 ),
+                const SizedBox(height: 14),
+                _CollapsibleSection(
+                  label: "nutritionalCalculations".tr,
+                  isExpanded: c.isSectionExpanded(2),
+                  onTap: () => c.toggleSection(2),
+                  child: _NutritionalCalcSection(controller: c),
+                ),
+                const SizedBox(height: 14),
+                _CollapsibleSection(
+                  label: "proteinFatCarbs".tr,
+                  isExpanded: c.isSectionExpanded(3),
+                  onTap: () => c.toggleSection(3),
+                  child: _MacrosSection(controller: c),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsibleSection extends StatelessWidget {
+  final String label;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _CollapsibleSection({
+    required this.label,
+    required this.isExpanded,
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Material(
+          color: AppColor.primary,
+          borderRadius: BorderRadius.circular(16),
+          elevation: 2,
+          shadowColor: Colors.black26,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Icon(
+                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: OutlinedButton.icon(
-                onPressed: c.openCreateDiet,
-                icon: const Icon(Icons.restaurant_menu_outlined),
-                label: Text("createDietForPatient".tr),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColor.primary,
-                  side: BorderSide(color: AppColor.primary),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+          ),
+        ),
+        if (isExpanded) ...[
+          const SizedBox(height: 12),
+          child,
+        ],
+      ],
+    );
+  }
+}
+
+class _PatientInfoSection extends StatelessWidget {
+  final PatientDetailsController controller;
+
+  const _PatientInfoSection({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    final genderTr = _genderLabel(c.patient.gender);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.shadowColor.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _InfoRowWithIcon(
+            label: "patientName".tr,
+            value: c.patient.fullname,
+            icon: Icons.person_outline,
+          ),
+          _InfoRowWithIcon(
+            label: "patientAge".tr,
+            value: c.patientAge != null ? c.patientAge.toString() : "-",
+            icon: Icons.calendar_today_outlined,
+          ),
+          _InfoRowWithIcon(
+            label: "patientGender".tr,
+            value: genderTr,
+            icon: Icons.wc_outlined,
+          ),
+          _InfoRowWithIcon(
+            label: "patientPhone".tr,
+            value: c.patient.phoneNumber ?? "-",
+            icon: Icons.phone_outlined,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _genderLabel(String? g) {
+    if (g == null || g.isEmpty) return "-";
+    final lower = g.toLowerCase();
+    if (lower.contains('m') || lower.contains('ذكر')) return "male".tr;
+    if (lower.contains('f') || lower.contains('انث')) return "female".tr;
+    return g;
+  }
+}
+
+class _InfoRowWithIcon extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _InfoRowWithIcon({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade600),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "$label : $value",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade800,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NutritionalCalcSection extends StatelessWidget {
+  final PatientDetailsController controller;
+
+  const _NutritionalCalcSection({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    final w = c.patient.weight;
+    final h = c.patient.height;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.shadowColor.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CalcRow("weightKg".tr, w?.toStringAsFixed(0) ?? "-"),
+          _CalcRow("heightCm".tr, h != null ? h.toStringAsFixed(0) : "-"),
+          _CalcRow("bmiResult".tr, c.bmi?.toStringAsFixed(2) ?? "-"),
+          _CalcRow("bmr".tr, c.bmr?.toStringAsFixed(2) ?? "-"),
+          _CalcRow("calories".tr, c.dailyCalories?.toStringAsFixed(2) ?? "-"),
+          _CalcRow("physicalActivityLevel".tr, c.activityMultiplier.toStringAsFixed(1)),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () => Get.toNamed("/bmi"),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColor.primary,
+              side: BorderSide(color: AppColor.primary),
+            ),
+            child: Text("bmiCalc".tr),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalcRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _CalcRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            "$label :",
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade800,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -107,125 +299,143 @@ class _MacrosSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = controller;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "nutritionMacros".tr,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            if (c.macrosStatus == StatusRequest.loading)
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else
-              TextButton.icon(
-                onPressed: c.toggleEditMacros,
-                icon: Icon(
-                  c.isEditingMacros ? Icons.close : Icons.edit_outlined,
-                  size: 18,
-                ),
-                label: Text(c.isEditingMacros ? "cancel".tr : "edit".tr),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (c.isEditingMacros) ...[
-          TextField(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.shadowColor.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _MacroStepper(
+            label: "carbohydrates".tr,
             controller: c.carbsController,
-            decoration: InputDecoration(
-              labelText: "carbohydrates".tr,
-              suffixText: "g",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onIncrement: c.incrementCarbs,
+            onDecrement: c.decrementCarbs,
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: c.fatsController,
-            decoration: InputDecoration(
-              labelText: "fats".tr,
-              suffixText: "g",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 12),
-          TextField(
+          _MacroStepper(
+            label: "protein".tr,
             controller: c.proteinController,
-            decoration: InputDecoration(
-              labelText: "protein".tr,
-              suffixText: "g",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onIncrement: c.incrementProtein,
+            onDecrement: c.decrementProtein,
           ),
           const SizedBox(height: 12),
+          _MacroStepper(
+            label: "fats".tr,
+            controller: c.fatsController,
+            onIncrement: c.incrementFats,
+            onDecrement: c.decrementFats,
+          ),
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: c.saveMacrosStatus == StatusRequest.loading ? null : c.saveMacros,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.primary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: c.saveMacrosStatus == StatusRequest.loading
                   ? const SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
-                  : Text("save".tr),
+                  : Text("saveChanges".tr),
             ),
-          ),
-        ] else ...[
-          _InfoRow("carbohydrates".tr, _macrosValue(c.patient.carbohydrates)),
-          _InfoRow("fats".tr, _macrosValue(c.patient.fats)),
-          _InfoRow("protein".tr, _macrosValue(c.patient.protein)),
-        ],
-      ],
-    );
-  }
-
-  String _macrosValue(double? v) {
-    if (v == null) return "-";
-    return "${v.toStringAsFixed(0)} g";
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MacroStepper extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+
+  const _MacroStepper({
+    required this.label,
+    required this.controller,
+    required this.onIncrement,
+    required this.onDecrement,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final value = controller.text;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "${"servingsInGrams".tr}: $value",
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton.filled(
+              onPressed: onDecrement,
+              icon: const Icon(Icons.remove, size: 20),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.grey.shade300,
+                foregroundColor: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 60,
+              child: Text(
+                value,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            IconButton.filled(
+              onPressed: onIncrement,
+              icon: const Icon(Icons.add, size: 20),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.grey.shade300,
+                foregroundColor: Colors.grey.shade800,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

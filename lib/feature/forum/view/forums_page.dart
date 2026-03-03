@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/forums_controller.dart';
 import '../model/forum_model.dart';
 
@@ -11,15 +12,15 @@ class ForumsPage extends GetView<ForumsController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ForumsController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text("forums".tr),
-          centerTitle: true,
-          elevation: 0,
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: "forums".tr,
+          showBackButton: true,
         ),
         body: _buildBody(c),
       ),
-    );
+    ));
   }
 
   Widget _buildBody(ForumsController c) {

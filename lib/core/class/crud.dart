@@ -9,6 +9,19 @@ import 'package:nutri_guide/core/constant/api_header.dart';
 import 'status_request.dart';
 import '../function/check_internet.dart';
 
+/// File field for multipart: path to local file and field name
+class MultipartFileField {
+  final String fieldName;
+  final String filePath;
+  final String? fileName;
+
+  MultipartFileField({
+    required this.fieldName,
+    required this.filePath,
+    this.fileName,
+  });
+}
+
 class Crud {
   /// Change this one value and it affects all requests.
   static const Duration requestTimeout = Duration(seconds: 20);
@@ -76,6 +89,70 @@ class Crud {
       print(e);
       print(track);
       print("error from cache crud-----");
+      return const Left(StatusRequest.serverFailure);
+    }
+  }
+
+  /// POST multipart/form-data for file uploads (e.g. register with cv, degree)
+  Future<Either<StatusRequest, Map<String, dynamic>>> postMultipart(
+    String url, {
+    required Map<String, String> fields,
+    List<MultipartFileField>? files,
+    String? token,
+  }) async {
+    try {
+      final hasInternet = await checkInternet();
+      if (!hasInternet) return const Left(StatusRequest.offlineFailure);
+
+      final uri = Uri.parse(url);
+      final request = http.MultipartRequest('POST', uri);
+
+      final headers = getHeader(token);
+      request.headers['Accept'] = headers['Accept'] ?? 'application/json';
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      // Do NOT set Content-Type for multipart - http package sets it with boundary
+
+      for (final e in fields.entries) {
+        request.fields[e.key] = e.value;
+      }
+
+      if (files != null) {
+        for (final f in files) {
+          final file = File(f.filePath);
+          if (await file.exists()) {
+            final fileName = f.fileName ?? file.path.split(RegExp(r'[/\\]')).last;
+            request.files.add(await http.MultipartFile.fromPath(
+              f.fieldName,
+              f.filePath,
+              filename: fileName,
+            ));
+          }
+        }
+      }
+
+      final streamed = await request.send().timeout(requestTimeout);
+      final res = await http.Response.fromStream(streamed);
+      final body = res.body.isEmpty ? "{}" : res.body;
+
+      Map<String, dynamic> json;
+      try {
+        json = jsonDecode(body) as Map<String, dynamic>;
+      } catch (_) {
+        json = {"message": body};
+      }
+
+      if (res.statusCode == 200 || res.statusCode == 201) return Right(json);
+      if (res.statusCode == 422) return Right(json);
+      if (res.statusCode == 401 || res.statusCode == 403) return Right(json);
+      return const Left(StatusRequest.serverFailure);
+    } on TimeoutException {
+      return const Left(StatusRequest.serverFailure);
+    } on SocketException {
+      return const Left(StatusRequest.offlineFailure);
+    } catch (e, st) {
+      print("postMultipart error: $e $st");
       return const Left(StatusRequest.serverFailure);
     }
   }

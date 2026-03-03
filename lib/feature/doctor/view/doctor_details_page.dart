@@ -2,54 +2,106 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/doctor_details_controller.dart';
 
 class DoctorDetailsPage extends GetView<DoctorDetailsController> {
   const DoctorDetailsPage({super.key});
 
+  static const Color _cardGrey = Color(0xffE4E0E4);
+  static const Color _textPurple = Color(0xff67025F);
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<DoctorDetailsController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: const Text("Doctor Details"),
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: "doctorDetails".tr,
+          showBackButton: true,
         ),
         body: Stack(
           children: [
             ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               children: [
-                _HeaderCard(
-                  name: c.doctor.name,
-                  specialization: c.doctor.specialization ?? "-",
-                  verified: c.doctor.isVerified,
-                  available: c.doctor.isAvailable,
+                const SizedBox(height: 8),
+                // Circular illustration
+                Center(
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: const Color(0xffe8f4f8),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.primary.withOpacity(0.2),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.medical_services_rounded,
+                      size: 72,
+                      color: _textPurple,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 12),
-
-                _InfoRow(title: "Rating", value: c.doctor.rating),
-                _InfoRow(
-                  title: "Experience",
-                  value: c.doctor.yearsOfExperience == null
-                      ? "-"
-                      : "${c.doctor.yearsOfExperience} years",
+                const SizedBox(height: 20),
+                // Name card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  decoration: BoxDecoration(
+                    color: _cardGrey,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    c.doctor.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: _textPurple,
+                    ),
+                  ),
                 ),
-                _InfoRow(
-                  title: "Fee",
+                const SizedBox(height: 24),
+                // Details section
+                _DetailRow(
+                  icon: Icons.email_outlined,
+                  label: "personalEmail".tr,
+                  value: c.doctor.email ?? "-",
+                ),
+                const SizedBox(height: 14),
+                _DetailRow(
+                  icon: Icons.phone_outlined,
+                  label: "phone".tr,
+                  value: c.doctor.phone ?? "-",
+                ),
+                const SizedBox(height: 14),
+                _DetailRow(
+                  icon: Icons.account_balance_outlined,
+                  label: "bankAccount".tr,
+                  value: c.doctor.bankAccount ?? "-",
+                ),
+                const SizedBox(height: 14),
+                _DetailRow(
+                  icon: Icons.payments_outlined,
+                  label: "dietPrice".tr,
                   value: c.doctor.consultationFee ?? "-",
                 ),
-
-                const SizedBox(height: 12),
-
-                if ((c.doctor.bio ?? "").trim().isNotEmpty)
-                  _Section(
-                    title: "Bio",
-                    child: Text(c.doctor.bio!.trim()),
-                  ),
-
-                const SizedBox(height: 18),
-
-                // ✅ button changes based on subscription
+                const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -58,153 +110,98 @@ class DoctorDetailsPage extends GetView<DoctorDetailsController> {
                         : (c.isSubscribed ? c.goToChat : c.openVirtualPaymentSheet),
                     icon: Icon(c.isSubscribed ? Icons.chat_bubble_outline : Icons.lock_outline),
                     label: Text(c.isSubscribed ? "Chat" : "Subscribe"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-
             if (c.statusRequest == StatusRequest.loading) const _LoadingOverlay(),
           ],
         ),
       ),
-    );
+    ));
   }
 }
 
-// باقي widgets كما هي عندك (HeaderCard / Chip / InfoRow / Section / LoadingOverlay)
-class _HeaderCard extends StatelessWidget {
-  final String name;
-  final String specialization;
-  final bool verified;
-  final bool available;
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
 
-  const _HeaderCard({
-    required this.name,
-    required this.specialization,
-    required this.verified,
-    required this.available,
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
   });
+
+  static const Color _textPurple = Color(0xff67025F);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: AppColor.primary.withOpacity(0.12),
-            child: Icon(Icons.person_outline, color: AppColor.primary),
-          ),
-          const SizedBox(width: 12),
+    final isAr = Get.locale?.languageCode == 'ar';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isAr) ...[
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _Chip(
-                      text: verified ? "Verified" : "Not verified",
-                      filled: verified,
-                    ),
-                  ],
+            child: RichText(
+              textAlign: TextAlign.right,
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade800,
+                  height: 1.4,
                 ),
-                const SizedBox(height: 6),
-                Text(specialization, style: TextStyle(color: Colors.grey.shade700)),
-                const SizedBox(height: 8),
-                _Chip(
-                  text: available ? "Available" : "Not available",
-                  filled: available,
+                children: [
+                  TextSpan(text: value),
+                  TextSpan(
+                    text: " : $label",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _textPurple,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Icon(icon, size: 24, color: _textPurple),
+        ] else ...[
+          Icon(icon, size: 24, color: _textPurple),
+          const SizedBox(width: 14),
+          Expanded(
+            child: RichText(
+              textAlign: TextAlign.left,
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade800,
+                  height: 1.4,
                 ),
-              ],
+                children: [
+                  TextSpan(
+                    text: "$label : ",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _textPurple,
+                    ),
+                  ),
+                  TextSpan(text: value),
+                ],
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  final String text;
-  final bool filled;
-  const _Chip({required this.text, required this.filled});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: filled ? AppColor.primary.withOpacity(0.12) : Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: filled ? AppColor.primary.withOpacity(0.35) : Colors.grey.shade300,
-        ),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: filled ? AppColor.primary : Colors.grey.shade700,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String title;
-  final String value;
-  const _InfoRow({required this.title, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Expanded(child: Text(title, style: TextStyle(color: Colors.grey.shade700))),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  final String title;
-  final Widget child;
-  const _Section({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          child,
-        ],
-      ),
+      ],
     );
   }
 }

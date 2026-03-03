@@ -65,17 +65,18 @@ class LoginController extends GetxController {
           (r) async {
 
         try {
-          // ❗️Handle forbidden / custom backend message
-          if (r is Map && r.containsKey("message") && !r.containsKey("token")) {
-            statusRequest = StatusRequest.failure;
-            update();
-
-            showAwesomeDialog(
-              type: DialogType.error,
-              title: "login_failed".tr,
-              desc: r["message"].toString(),
-            );
-            return;
+          // Handle error responses (message but no token)
+          if (r is Map && !r.containsKey("token") && !r.containsKey("access_token")) {
+            if (r.containsKey("message")) {
+              statusRequest = StatusRequest.failure;
+              update();
+              showAwesomeDialog(
+                type: DialogType.error,
+                title: "login_failed".tr,
+                desc: r["message"].toString(),
+              );
+              return;
+            }
           }
 
           final token = r['token'] ?? r['access_token'];

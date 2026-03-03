@@ -4,6 +4,7 @@ import 'package:nutri_guide/core/routes/app_route.dart';
 
 import '../../../../core/class/status_request.dart';
 import '../../../../core/constant/theme/colors.dart';
+import '../../../../core/shared/widgets/app_bar.dart';
 import '../../../../core/shared/widgets/drawer.dart';
 import '../controller/doctor_patients_controller.dart';
 import '../model/patient_model.dart';
@@ -14,21 +15,35 @@ class DoctorPatientsPage extends GetView<DoctorPatientsController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<DoctorPatientsController>(
-      builder: (c) => Scaffold(
+      builder: (c) => SafeArea(
+        child: Scaffold(
         drawer: HomeDrawer(controller: controller),
 
-        appBar: AppBar(
-          title: const Text("Patients"),
+        appBar: CustomAppBar(
+          title: "patientsList".tr,
+          leading: Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu, color: Color(0xff4a3f6a), size: 26),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            ),
+          ),
           actions: [
             IconButton(
               onPressed: c.refreshPatients,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh, color: Color(0xff4a3f6a)),
             ),
           ],
         ),
-        body: _buildBody(c),
+        body: Column(
+          children: [
+            _SearchBar(controller: c),
+            Expanded(child: _buildBody(c)),
+          ],
+        ),
       ),
-    );
+    ));
   }
 
   Widget _buildBody(DoctorPatientsController c) {
@@ -53,10 +68,11 @@ class DoctorPatientsPage extends GetView<DoctorPatientsController> {
       );
     }
 
-    if (c.patients.isEmpty) {
+    final list = c.filteredPatients;
+    if (list.isEmpty) {
       return _StateView(
-        title: "No patients found",
-        buttonText: "Refresh",
+        title: c.searchQuery.isEmpty ? "No patients found" : "noTipsFound".tr,
+        buttonText: "refresh".tr,
         onRetry: c.refreshPatients,
       );
     }
@@ -72,17 +88,50 @@ class DoctorPatientsPage extends GetView<DoctorPatientsController> {
         onRefresh: c.refreshPatients,
         child: ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: c.patients.length,
+          itemCount: list.length,
           separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (_, i) => _PatientCard(
-            patient: c.patients[i],
+            patient: list[i],
             onTap: () {
-              Get.toNamed(
-                AppRoute.patientDetails, // غيّرها لو اسم الراوت مختلف
-                arguments: c.patients[i], // نرسل الموديل كامل
-              );
+              Get.toNamed(AppRoute.patientDetails, arguments: list[i]);
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  final DoctorPatientsController controller;
+
+  const _SearchBar({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: TextField(
+        controller: controller.searchController,
+        onChanged: controller.onSearchChanged,
+        decoration: InputDecoration(
+          hintText: "searchForPatient".tr,
+          prefixIcon: Icon(Icons.search, color: AppColor.primary),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColor.primary.withOpacity(0.5)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColor.primary.withOpacity(0.5)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColor.primary, width: 1.5),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );

@@ -9,8 +9,7 @@ class SplashController extends GetxController {
   }
 
   void _goNext() {
-    // عرض السبلّاش قليلاً ثم الانتقال إلى gate
-    Future.delayed(const Duration(milliseconds: 600), () {
+    Future.delayed(const Duration(milliseconds: 3000), () {
       Get.offAllNamed(AppRoute.gate);
     });
   }

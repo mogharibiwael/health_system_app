@@ -2,9 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:nutri_guide/feature/Home/view/home.dart';
 import 'package:nutri_guide/feature/auth/view/forget_password.dart';
+import 'package:nutri_guide/feature/auth/view/verify_email_page.dart';
 import 'package:nutri_guide/feature/auth/view/login.dart';
-import 'package:nutri_guide/feature/auth/view/signup.dart';
+import 'package:nutri_guide/feature/auth/view/signup_choose_role_page.dart';
+import 'package:nutri_guide/feature/auth/view/signup_user_page.dart';
+import 'package:nutri_guide/feature/auth/view/signup_doctor_page.dart';
 import '../../doctorApp/feature/home/view/doctor_home.dart';
+import '../../doctorApp/feature/home/view/doctor_welcome_page.dart';
 import '../../doctorApp/feature/home/view/patient_details_view.dart';
 import '../../feature/auth/middleware/GateMiddleware.dart';
 import '../../feature/auth/middleware/auth_middleware.dart';
@@ -15,13 +19,22 @@ import '../../feature/chat/view/patient_profile_page.dart';
 import '../../feature/doctor/view/doctor_details_page.dart';
 import '../../feature/doctor/view/doctors_page.dart';
 import '../../feature/splash/view/splash.dart';
+import '../../feature/welcome/view/welcome_page.dart';
 import '../../feature/forum/view/forum_posts_page.dart';
 import '../../feature/forum/view/forums_page.dart';
+import '../../feature/tips/view/tips_main_page.dart';
 import '../../feature/tips/view/tips_page.dart';
+import '../../feature/athkar/view/spiritual_nutrition_page.dart';
+import '../../feature/athkar/view/athkar_list_page.dart';
+import '../../feature/settings/view/settings_page.dart';
+import '../../feature/settings/view/edit_profile_page.dart';
+import '../../feature/settings/view/reminders_page.dart';
+import '../../feature/settings/view/team_page.dart';
 import '../../feature/consultations/view/consultations_page.dart';
 import '../../feature/diet/view/diet_page.dart';
 import '../../feature/diet/view/diet_meals_page.dart';
 import '../../feature/diet/view/create_diet_for_patient_page.dart';
+import '../../feature/step_counter/view/step_counter_page.dart';
 import 'app_route.dart';
 import 'binding.dart';
 
@@ -43,7 +56,23 @@ abstract class AppPages {
     ),
     GetPage(
       name: AppRoute.signUp,
-      page: () => const Signup(),
+      page: () => const SignupChooseRolePage(),
+      middlewares: [GuestMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.signUpChooseRole,
+      page: () => const SignupChooseRolePage(),
+      middlewares: [GuestMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.signUpUser,
+      page: () => const SignupUserPage(),
+      binding: SignupBinding(),
+      middlewares: [GuestMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.signUpDoctor,
+      page: () => const SignupDoctorPage(),
       binding: SignupBinding(),
       middlewares: [GuestMiddleware()],
     ),
@@ -53,12 +82,24 @@ abstract class AppPages {
       bindings: [ForgotBinding()],
       middlewares: [GuestMiddleware()],
     ),
+    GetPage(
+      name: AppRoute.verifyEmail,
+      page: () => const VerifyEmailPage(),
+      binding: VerifyEmailBinding(),
+      middlewares: [GuestMiddleware()],
+    ),
 
-    // Gate: decides where to go (login / home / doctorHome)
+    // Gate: decides where to go (welcome when not logged in / home or doctorHome when logged in)
     GetPage(
       name: AppRoute.gate,
       page: () => const GatePage(),
-      middlewares: [GateMiddleware()], // ✅ NEW
+      middlewares: [GateMiddleware()],
+    ),
+
+    // Welcome: shown before login (logo + text + Exit, Create Account, Login)
+    GetPage(
+      name: AppRoute.welcome,
+      page: () => const WelcomePage(),
     ),
 
     // Protected pages
@@ -71,8 +112,49 @@ abstract class AppPages {
 
     GetPage(
       name: "/tips",
+      page: () => const TipsMainPage(),
+      binding: TipsMainBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: "/tips-list",
       page: () => const TipsPage(),
       binding: TipsBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: "/spiritual-nutrition",
+      page: () => const SpiritualNutritionPage(),
+      binding: SpiritualNutritionBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: "/athkar-list",
+      page: () => const AthkarListPage(),
+      binding: AthkarListBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: "/settings",
+      page: () => const SettingsPage(),
+      binding: SettingsBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: "/edit-profile",
+      page: () => const EditProfilePage(),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: "/reminders",
+      page: () => const RemindersPage(),
+      binding: RemindersBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: "/team",
+      page: () => const TeamPage(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
@@ -96,10 +178,16 @@ abstract class AppPages {
     ),
 
     GetPage(
+      name: AppRoute.doctorWelcome,
+      page: () => const DoctorWelcomePage(),
+      middlewares: [DoctorOnlyMiddleware()],
+      bindings: [HomeDoctorBinding()],
+    ),
+    GetPage(
       name: AppRoute.doctorHome,
       page: () => const DoctorPatientsPage(),
-      middlewares: [DoctorOnlyMiddleware()], // Only doctors can access
-      bindings: [HomeDoctorBinding()]
+      middlewares: [DoctorOnlyMiddleware()],
+      bindings: [HomeDoctorBinding()],
     ),
     GetPage(
       name: AppRoute.chat,
@@ -162,6 +250,13 @@ abstract class AppPages {
       page: () => const CreateDietForPatientPage(),
       binding: DietBinding(),
       middlewares: [DoctorOnlyMiddleware()],
+    ),
+
+    GetPage(
+      name: "/step-counter",
+      page: () => const StepCounterPage(),
+      binding: StepCounterBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
   ];

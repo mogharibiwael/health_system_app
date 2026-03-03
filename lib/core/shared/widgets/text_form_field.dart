@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../constant/theme/colors.dart';
+
 // This Custom TextFormField Widget have label and hint and icon
 class CustomTextFormField extends StatelessWidget {
   TextEditingController controller;
@@ -30,6 +32,7 @@ class CustomTextFormField extends StatelessWidget {
         controller: controller,
         keyboardType:keyboardType ,
         obscureText: obscureText,
+        style: TextStyle(color: AppColor.primary),
 
         decoration: InputDecoration(
           label: Text(label),
@@ -38,7 +41,7 @@ class CustomTextFormField extends StatelessWidget {
           floatingLabelBehavior: FloatingLabelBehavior.always,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          suffixIcon: Icon(icon),
+          suffixIcon: Icon(icon, color: Colors.black),
         ),
       ),
     );

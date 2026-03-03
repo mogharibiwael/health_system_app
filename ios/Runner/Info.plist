@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to upload degree and CV documents.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take photos of documents.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>This app tracks your steps for the step counter feature.</string>
 </dict>
 </plist>

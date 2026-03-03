@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/class/status_request.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../../../core/shared/widgets/global_button.dart';
 import '../../../core/shared/widgets/text_form_field.dart';
 import '../controller/forget_password_controller.dart';
@@ -11,8 +12,12 @@ class ForgotPasswordPage extends GetView<ForgotPasswordController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title:  Text("forgotPasswordTitle".tr)),
+    return SafeArea(
+      child: Scaffold(
+      appBar: CustomAppBar(
+        title: "forgotPasswordTitle".tr,
+        showBackButton: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: GetBuilder<ForgotPasswordController>(
@@ -43,6 +48,6 @@ class ForgotPasswordPage extends GetView<ForgotPasswordController> {
           ),
         ),
       ),
-    );
+    ));
   }
 }

@@ -1,137 +1,230 @@
 import 'package:flutter/material.dart';
-import 'package:nutri_guide/core/constant/theme/colors.dart';
 import 'package:get/get.dart';
+import 'package:nutri_guide/core/constant/asset.dart';
+import 'package:nutri_guide/core/constant/theme/colors.dart';
+import 'package:nutri_guide/core/permissions/permissions.dart';
+import 'package:nutri_guide/core/routes/app_route.dart';
+import 'package:nutri_guide/core/service/serviecs.dart';
 
-import '../../../core/service/serviecs.dart';
-import '../../../core/permissions/permissions.dart';
-import '../../../core/routes/app_route.dart';
-
+/// Drawer matching the design: logo header, menu items, close button.
 class HomeDrawer extends StatelessWidget {
   final dynamic controller;
   const HomeDrawer({super.key, required this.controller});
 
+  static const Color _drawerBg = Color(0xff9F8A9A);
+  static const Color _drawerBgLight = Color(0xffb5a3b0);
+
   @override
   Widget build(BuildContext context) {
-    final MyServices myServices = Get.find();
+    final myServices = Get.find<MyServices>();
     final permissions = Permissions(myServices);
-    final bool isSubscribed = myServices.subscribedDoctorIds.isNotEmpty;
-    final bool showForums = permissions.isDoctor || permissions.isAdmin || (permissions.isPatient && isSubscribed);
+    final isDoctor = permissions.isDoctor || permissions.isAdmin;
+    final userName = myServices.user?["name"]?.toString().trim();
+    final displayName = (userName != null && userName.isNotEmpty) ? userName : "User";
 
     return Drawer(
-      child: SafeArea(
-        child: Column(
-          children: [
-            // ─── User Header ───
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColor.primary.withOpacity(0.12),
-                    AppColor.primary.withOpacity(0.04),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundColor: AppColor.primary.withOpacity(0.2),
-                    child: Text(
-                      _initials(controller.userName),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColor.primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          controller.userName,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          controller.userEmail,
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                          overflow: TextOverflow.ellipsis,
+      child: Container(
+        color: _drawerBg,
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              // ─── Logo (tappable → profile/doctor info) ───
+              Center(
+                child: GestureDetector(
+                  onTap: () => _navigate(context, "/edit-profile"),
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 4),
-
-            // ─── Info tiles ───
-            ListTile(
-              leading: const Icon(Icons.phone_outlined),
-              title: Text("phone".tr),
-              subtitle: Text(controller.userPhone),
-            ),
-            ListTile(
-              leading: const Icon(Icons.badge_outlined),
-              title: Text("role".tr),
-              subtitle: Text(controller.userRole),
-            ),
-
-            const Divider(height: 1),
-
-            // ─── Forums (conditional) ───
-            if (showForums)
-              ListTile(
-                leading: Icon(Icons.forum_outlined, color: AppColor.primary),
-                title: Text(
-                  "forums".tr,
-                  style: TextStyle(fontWeight: FontWeight.w500, color: AppColor.primary),
-                ),
-                trailing: const Icon(Icons.chevron_right, size: 20),
-                onTap: () {
-                  Navigator.of(context).pop(); // close drawer
-                  Get.toNamed(AppRoute.forums);
-                },
-              ),
-
-            const Spacer(),
-
-            // ─── Logout ───
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: controller.logout,
-                  icon: const Icon(Icons.logout),
-                  label: Text("logout".tr),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red.shade600,
-                    side: BorderSide(color: Colors.red.shade200),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: ClipOval(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Image.asset(ImageAssets.logo, fit: BoxFit.contain),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              // ─── User/Doctor name under logo ───
+              Center(
+                child: Text(
+                  displayName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // ─── Menu items ───
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    if (isDoctor)
+                      _DrawerItem(
+                        icon: Icons.people_outline,
+                        label: "patientsList".tr,
+                        onTap: () => _navigate(context, AppRoute.doctorHome),
+                      ),
+                    if (!isDoctor)
+                    _DrawerItem(
+                      icon: Icons.person_outline,
+                      label: "personalPatientInfo".tr,
+                      onTap: () => _navigate(context, "/edit-profile"),
+                    ),
+                    _DrawerItem(
+                      icon: Icons.restaurant_menu_outlined,
+                      label: "diets".tr,
+                      onTap: () => _navigate(context, AppRoute.diet),
+                    ),
+                    _DrawerItem(
+                      icon: Icons.chat_bubble_outline,
+                      label: "chat".tr,
+                      onTap: () => _navigate(context, AppRoute.consultations),
+                    ),
+                    _DrawerItem(
+                      icon: Icons.assessment_outlined,
+                      label: "reports".tr,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Get.snackbar("reports".tr, "comingSoon".tr);
+                      },
+                    ),
+                    _DrawerItem(
+                      icon: Icons.calculate_outlined,
+                      label: "bodyCalculations".tr,
+                      onTap: () => _navigate(context, "/bmi"),
+                    ),
+                    _DrawerItem(
+                      icon: Icons.medical_services_outlined,
+                      label: "medicalExaminations".tr,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Get.snackbar("medicalExaminations".tr, "comingSoon".tr);
+                      },
+                    ),
+                    _DrawerItem(
+                      icon: Icons.help_outline,
+                      label: "helpFiles".tr,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Get.snackbar("helpFiles".tr, "comingSoon".tr);
+                      },
+                    ),
+                    _DrawerItem(
+                      icon: Icons.language,
+                      label: "language".tr,
+                      onTap: () => _navigate(context, "/settings"),
+                    ),
+                    _DrawerItem(
+                      icon: Icons.home_outlined,
+                      label: "mainMenu".tr,
+                      onTap: () => _navigateToHome(context, isDoctor),
+                    ),
+
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Colors.white24),
+              // ─── Logout button ───
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () => _logout(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      "logout".tr,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length >= 2) {
-      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+  void _navigate(BuildContext context, String route) {
+    Navigator.of(context).pop();
+    Get.toNamed(route);
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    Navigator.of(context).pop();
+    final myServices = Get.find<MyServices>();
+    await myServices.clearSession();
+    Get.offAllNamed(AppRoute.login);
+  }
+
+  void _navigateToHome(BuildContext context, bool isDoctor) {
+    Navigator.of(context).pop();
+    if (isDoctor) {
+      Get.offAllNamed(AppRoute.doctorWelcome);
+    } else {
+      Get.offAllNamed(AppRoute.home);
     }
-    return name.isNotEmpty ? name[0].toUpperCase() : "?";
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = Get.locale?.languageCode == 'ar';
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      leading: Icon(icon, color: Colors.white, size: 24),
+      title: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+        textAlign: isAr ? TextAlign.right : TextAlign.left,
+      ),
+      trailing: null,
+      onTap: onTap,
+    );
   }
 }

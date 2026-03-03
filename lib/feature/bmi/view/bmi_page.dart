@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nutri_guide/core/constant/theme/colors.dart';
+import 'package:nutri_guide/core/shared/widgets/app_bar.dart';
 import '../controller/bmi_controller.dart';
 
 class BmiPage extends GetView<BmiController> {
@@ -10,11 +11,11 @@ class BmiPage extends GetView<BmiController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<BmiController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text("bmiBmrCalc".tr),
-          centerTitle: true,
-          elevation: 0,
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: "bmiBmrCalc".tr,
+          showBackButton: true,
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -113,7 +114,7 @@ class BmiPage extends GetView<BmiController> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 

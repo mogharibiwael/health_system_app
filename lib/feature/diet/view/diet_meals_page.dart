@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/diet_controller.dart';
 import '../model/diet_model.dart';
 
@@ -17,19 +18,20 @@ class DietMealsPage extends GetView<DietController> {
           c.loadMeals();
         }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text("dietMeals".tr),
-            centerTitle: true,
-            elevation: 0,
+        return SafeArea(
+          child: Scaffold(
+          appBar: CustomAppBar(
+            title: "dietMeals".tr,
+            showBackButton: true,
             actions: [
               IconButton(
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh, color: Color(0xff4a3f6a)),
                 onPressed: c.loadMeals,
               ),
             ],
           ),
           body: _buildBody(c),
+        ),
         );
       },
     );

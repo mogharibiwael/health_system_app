@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/diet_controller.dart';
 
 /// Doctor-only: create diet plan for a specific patient (opened from patient details).
@@ -24,10 +25,11 @@ class CreateDietForPatientPage extends GetView<DietController> {
           c.titleController.text = "Diet plan for $patientName";
         }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text("createDietPlan".tr),
-            centerTitle: true,
+        return SafeArea(
+          child: Scaffold(
+          appBar: CustomAppBar(
+            title: "createDietPlan".tr,
+            showBackButton: true,
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -137,7 +139,7 @@ class CreateDietForPatientPage extends GetView<DietController> {
               ],
             ),
           ),
-        );
+        ));
       },
     );
   }

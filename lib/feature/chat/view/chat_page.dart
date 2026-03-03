@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/class/status_request.dart';
 import '../../../core/constant/theme/colors.dart';
+import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/chat_controller.dart';
 import '../model/chat_message_model.dart';
 
@@ -11,13 +12,15 @@ class ChatPage extends GetView<ChatController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ChatController>(
-      builder: (c) => Scaffold(
-        appBar: AppBar(
-          title: Text(c.doctorName.isNotEmpty ? c.doctorName : "Chat"),
+      builder: (c) => SafeArea(
+        child: Scaffold(
+        appBar: CustomAppBar(
+          title: c.doctorName.isNotEmpty ? c.doctorName : "Chat",
+          showBackButton: true,
           actions: [
             IconButton(
               onPressed: c.refreshHistory,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh, color: Color(0xff4a3f6a)),
             ),
           ],
         ),
@@ -40,7 +43,7 @@ class ChatPage extends GetView<ChatController> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

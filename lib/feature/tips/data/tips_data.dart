@@ -10,10 +10,12 @@ class TipsData {
   Future<Either<StatusRequest, Map<String, dynamic>>> fetchTips({
     required int page,
     String? token,
+    int? categoryId,
   }) async {
-
-    final url = "${ApiLinks.baseUrl}/public/tips?page=$page"; // adjust to your links file
+    var url = "${ApiLinks.baseUrl}/public/tips?page=$page";
+    if (categoryId != null && categoryId > 0) {
+      url += "&category_id=$categoryId";
+    }
     return await crud.getData(url, token: token);
-
   }
 }
