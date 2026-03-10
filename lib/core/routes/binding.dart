@@ -14,6 +14,8 @@ import '../../feature/bmi/controller/bmi_controller.dart';
 import '../../feature/chat/controller/chat_controller.dart';
 import '../../feature/doctor/controller/doctor_details_controller.dart';
 import '../../feature/doctor/controller/doctors_controller.dart';
+import '../../feature/doctor/payment_invoice_controller.dart';
+import '../../feature/doctor/subscription/subscription_info_controller.dart';
 import '../../feature/home/controller/home_controller.dart';
 import '../../feature/forum/controller/forum_posts_controller.dart';
 import '../../feature/forum/controller/forums_controller.dart';
@@ -26,7 +28,17 @@ import '../../feature/settings/controller/edit_profile_controller.dart';
 import '../../feature/settings/controller/reminders_controller.dart';
 import '../../feature/consultations/controller/consultations_controller.dart';
 import '../../feature/diet/controller/diet_controller.dart';
+import '../../feature/diet/controller/diet_periods_controller.dart';
+import '../../feature/diet/controller/diet_targets_controller.dart';
+import '../../feature/diet/controller/base_servings_controller.dart';
+import '../../feature/diet/controller/portion_categories_controller.dart';
+import '../../feature/diet/controller/portion_carb_controller.dart';
+import '../../feature/diet/controller/portion_protein_controller.dart';
+import '../../feature/diet/controller/diet_distribution_controller.dart';
+import '../../feature/diet/controller/determine_meals_controller.dart';
 import '../../feature/step_counter/controller/step_counter_controller.dart';
+import '../../feature/medical_files/controller/medical_files_controller.dart';
+import '../../feature/medical_tests/controller/medical_tests_controller.dart';
 
 class InitBinding extends Bindings {
   @override
@@ -149,6 +161,20 @@ class DoctorDetailsBinding extends Bindings {
   }
 }
 
+class SubscriptionInfoBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => SubscriptionInfoController());
+  }
+}
+
+class PaymentInvoiceBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => PaymentInvoiceController());
+  }
+}
+
 class ChatBinding extends Bindings {
   @override
   void dependencies() {
@@ -198,6 +224,62 @@ class DietBinding extends Bindings {
   }
 }
 
+class DietPeriodsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => DietPeriodsController());
+  }
+}
+
+class DietTargetsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => DietTargetsController());
+  }
+}
+
+class BaseServingsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => BaseServingsController());
+  }
+}
+
+class PortionCategoriesBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => PortionCategoriesController());
+  }
+}
+
+class PortionCarbBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => PortionCarbController());
+  }
+}
+
+class PortionProteinBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => PortionProteinController());
+  }
+}
+
+class DietDistributionBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => DietDistributionController());
+  }
+}
+
+class DetermineMealsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => DetermineMealsController());
+  }
+}
+
 class StepCounterBinding extends Bindings {
   @override
   void dependencies() {
@@ -205,5 +287,17 @@ class StepCounterBinding extends Bindings {
   }
 }
 
+class MedicalFilesBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(MedicalFilesController(), permanent: false);
+  }
+}
 
+class MedicalTestsBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(MedicalTestsController(), permanent: false);
+  }
+}
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dartz/dartz.dart';
 import 'package:http/http.dart' as http;
@@ -211,6 +212,12 @@ class Crud {
         return Right(json);
       }
 
+      // rate limit (429 Too Many Requests)
+      if (res.statusCode == 429) {
+        print("GET rate limit 429");
+        return const Left(StatusRequest.rateLimit);
+      }
+
       print("GET server error ${res.statusCode}: ${body.length > 300 ? body.substring(0, 300) : body}");
       return const Left(StatusRequest.serverFailure);
     } on TimeoutException catch (e) {
@@ -228,6 +235,25 @@ class Crud {
       print(stack);
       print("GET error -------");
       return const Left(StatusRequest.serverFailure);
+    }
+  }
+
+  /// GET raw bytes (for file download). Returns bytes on success, null on failure.
+  Future<Uint8List?> getFileBytes(String url, {String? token}) async {
+    try {
+      final hasInternet = await checkInternet();
+      if (!hasInternet) return null;
+
+      final res = await http
+          .get(Uri.parse(url), headers: getHeaderForFile(token))
+          .timeout(const Duration(seconds: 60));
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return res.bodyBytes;
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -263,4 +289,35 @@ class Crud {
     }
   }
 
+  Future<Either<StatusRequest, Map<String, dynamic>>> deleteData(
+    String url, {
+    String? token,
+  }) async {
+    try {
+      final hasInternet = await checkInternet();
+      if (!hasInternet) return const Left(StatusRequest.offlineFailure);
+
+      final res = await http.delete(
+        Uri.parse(url),
+        headers: getHeader(token),
+      ).timeout(requestTimeout);
+
+      final body = res.body.isEmpty ? "{}" : res.body;
+      Map<String, dynamic> json;
+      try {
+        json = jsonDecode(body) as Map<String, dynamic>;
+      } catch (_) {
+        json = {"message": body};
+      }
+
+      if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 204) {
+        return Right(json);
+      }
+      if (res.statusCode == 422) return Right(json);
+      if (res.statusCode == 401 || res.statusCode == 403) return Right(json);
+      return const Left(StatusRequest.serverFailure);
+    } catch (_) {
+      return const Left(StatusRequest.serverFailure);
+    }
+  }
 }

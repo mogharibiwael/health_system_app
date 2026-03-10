@@ -1,6 +1,8 @@
-import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/class/status_request.dart';
 import '../../../core/function/handel_data.dart';
@@ -25,6 +27,10 @@ class ChatController extends GetxController {
 
   final TextEditingController messageController = TextEditingController();
   final ScrollController scrollController = ScrollController();
+
+  /// Selected file for upload (path and display name)
+  String? attachedFilePath;
+  String? attachedFileName;
 
   StatusRequest statusRequest = StatusRequest.loading; // history loading
   StatusRequest sendStatus = StatusRequest.success;
@@ -128,23 +134,69 @@ class ChatController extends GetxController {
 
   Future<void> refreshHistory() async => loadHistory(first: true);
 
+  void clearAttachment() {
+    attachedFilePath = null;
+    attachedFileName = null;
+    update();
+  }
+
+  Future<void> pickImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? xFile = await picker.pickImage(source: ImageSource.gallery);
+      if (xFile != null) {
+        attachedFilePath = xFile.path;
+        attachedFileName = xFile.name;
+        update();
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Could not pick image");
+    }
+  }
+
+  Future<void> pickFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final f = result.files.first;
+        final path = f.path;
+        if (path != null && path.isNotEmpty) {
+          attachedFilePath = path;
+          attachedFileName = f.name;
+          update();
+        } else {
+          Get.snackbar("Error", "File path not available");
+        }
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Could not pick file");
+    }
+  }
+
   Future<void> send() async {
     if (isSending) return;
 
     final text = messageController.text.trim();
-    if (text.isEmpty) return;
+    final hasFile = attachedFilePath != null && attachedFilePath!.isNotEmpty;
+
+    if (text.isEmpty && !hasFile) return;
 
     if (receiverId == 0) {
       Get.snackbar("Error", "Missing receiver_id");
       return;
     }
 
+    final messageText = text.isEmpty ? "(Attachment)" : text;
+
     // optimistic
     final optimistic = ChatMessageModel(
       id: -DateTime.now().millisecondsSinceEpoch,
       userId: myUserId,
       doctorId: doctorId,
-      message: text,
+      message: hasFile ? "$messageText 📎 ${attachedFileName ?? 'file'}" : messageText,
       createdAt: DateTime.now(),
       isMe: true,
       pending: true,
@@ -152,42 +204,60 @@ class ChatController extends GetxController {
 
     messages.add(optimistic);
     messageController.clear();
+    final fileToSend = attachedFilePath;
+    final fileNameToSend = attachedFileName;
+    clearAttachment();
     update();
     _scrollToBottom();
 
     sendStatus = StatusRequest.loading;
     update();
-
     _scrollToBottom();
-
-// ✅ mark read after UI frame
     Future.microtask(() => _markVisibleUnreadAsRead());
 
-    // ✅ Debug (important)
-    print("SEND => conversation_id=$conversationId receiver_id=$receiverId doctor_id=$doctorId myUserId=$myUserId msg=$text");
-
-    final res = await chatData.sendMessage(
-      conversationId: conversationId, // ✅ not 0 now
-      receiverId: receiverId,         // ✅ fallback to doctorId if missing
-      message: text,
-      token: myServices.token,
-    );
-
-    res.fold(
-          (l) {
-        sendStatus = StatusRequest.success;
-        messages.remove(optimistic);
-        update();
-        Get.snackbar("Error", _mapStatus(l));
-      },
-          (r) async {
-        sendStatus = StatusRequest.success;
-        update();
-
-        // ✅ CRITICAL: always sync after send
-        await refreshHistory();
-      },
-    );
+    if (fileToSend != null && File(fileToSend).existsSync()) {
+      final res = await chatData.sendMessageWithFile(
+        conversationId: conversationId,
+        receiverId: receiverId,
+        message: messageText,
+        filePath: fileToSend,
+        fileName: fileNameToSend,
+        token: myServices.token,
+      );
+      res.fold(
+        (l) {
+          sendStatus = StatusRequest.success;
+          messages.remove(optimistic);
+          update();
+          Get.snackbar("Error", _mapStatus(l));
+        },
+        (r) async {
+          sendStatus = StatusRequest.success;
+          update();
+          await refreshHistory();
+        },
+      );
+    } else {
+      final res = await chatData.sendMessage(
+        conversationId: conversationId,
+        receiverId: receiverId,
+        message: messageText,
+        token: myServices.token,
+      );
+      res.fold(
+        (l) {
+          sendStatus = StatusRequest.success;
+          messages.remove(optimistic);
+          update();
+          Get.snackbar("Error", _mapStatus(l));
+        },
+        (r) async {
+          sendStatus = StatusRequest.success;
+          update();
+          await refreshHistory();
+        },
+      );
+    }
   }
 
   String _mapStatus(StatusRequest s) {
@@ -223,6 +293,40 @@ class ChatController extends GetxController {
     for (final m in unread) {
       await markAsRead(m.id);
     }
+  }
+
+  /// Upload medical test to api/medical-tests (from Medical Test dialog)
+  Future<void> uploadMedicalTest({
+    required String name,
+    required String filePath,
+    String? fileName,
+  }) async {
+    if (myUserId <= 0) {
+      Get.snackbar("error".tr, "Session error");
+      return;
+    }
+    final res = await chatData.uploadMedicalTest(
+      name: name,
+      filePath: filePath,
+      fileName: fileName,
+      doctorId: doctorId,
+      userId: myUserId,
+      token: myServices.token,
+    );
+    res.fold(
+      (l) {
+        Get.snackbar("error".tr, _mapStatus(l));
+      },
+      (r) {
+        if (r.containsKey("errors")) {
+          final msg = r["message"]?.toString() ?? "Failed";
+          Get.snackbar("error".tr, msg);
+        } else {
+          Get.snackbar("success".tr, r["message"]?.toString() ?? "Medical test uploaded");
+          refreshHistory();
+        }
+      },
+    );
   }
 
   Future<void> markAsRead(int messageId) async {

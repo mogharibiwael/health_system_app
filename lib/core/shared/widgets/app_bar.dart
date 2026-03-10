@@ -9,6 +9,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({
     super.key,
     required this.title,
+    this.subtitle,
     this.onBack,
     this.showLogo = true,
     this.showBackButton = false,
@@ -17,6 +18,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   final String title;
+  /// Optional subtitle (e.g. patient name) shown below title
+  final String? subtitle;
   final VoidCallback? onBack;
   final bool showLogo;
   final bool showBackButton;
@@ -28,7 +31,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   static const Color _lightLavender = Color(0xffe4e0ec);
   static const Color _darkPurple = Color(0xff4a3f6a);
 
-  static const double _appBarHeight = 72;
+  static const double _appBarHeight = 88;
 
   @override
   Size get preferredSize => const Size.fromHeight(_appBarHeight);
@@ -36,6 +39,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final isAr = Get.locale?.languageCode == 'ar';
+    final textDir = isAr ? TextDirection.rtl : TextDirection.ltr;
+    final displayTitle = title.trim().isNotEmpty && title.trim() != "-"
+        ? title.trim()
+        : "patient".tr;
 
     return Container(
       decoration: BoxDecoration(
@@ -52,7 +59,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      child: Padding(
+      child: Directionality(
+        textDirection: textDir,
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           child: Row(
             children: [
@@ -68,14 +77,48 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               else
                 const SizedBox(width: 44, height: 44),
               Expanded(
-                child: Text(
-                  title,
-                  textAlign: isAr ? TextAlign.right : TextAlign.left,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: _darkPurple,
-                  ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: subtitle != null && subtitle!.trim().isNotEmpty && subtitle!.trim() != "-"
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              displayTitle,
+                              textAlign: isAr ? TextAlign.right : TextAlign.left,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                color: _darkPurple,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              subtitle!.trim(),
+                              textAlign: isAr ? TextAlign.right : TextAlign.left,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: _darkPurple.withOpacity(0.9),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        )
+                      : Text(
+                          displayTitle,
+                          textAlign: isAr ? TextAlign.right : TextAlign.left,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: _darkPurple,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                 ),
               ),
               if (actions != null) ...actions!,
@@ -109,6 +152,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
         ),
+      ),
     );
   }
 }

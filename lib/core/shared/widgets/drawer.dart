@@ -19,6 +19,7 @@ class HomeDrawer extends StatelessWidget {
     final myServices = Get.find<MyServices>();
     final permissions = Permissions(myServices);
     final isDoctor = permissions.isDoctor || permissions.isAdmin;
+    final isPatientSubscribed = !isDoctor && myServices.subscribedDoctorIds.isNotEmpty;
     final userName = myServices.user?["name"]?.toString().trim();
     final displayName = (userName != null && userName.isNotEmpty) ? userName : "User";
 
@@ -82,49 +83,43 @@ class HomeDrawer extends StatelessWidget {
                         onTap: () => _navigate(context, AppRoute.doctorHome),
                       ),
                     if (!isDoctor)
-                    _DrawerItem(
-                      icon: Icons.person_outline,
-                      label: "personalPatientInfo".tr,
-                      onTap: () => _navigate(context, "/edit-profile"),
-                    ),
-                    _DrawerItem(
-                      icon: Icons.restaurant_menu_outlined,
-                      label: "diets".tr,
-                      onTap: () => _navigate(context, AppRoute.diet),
-                    ),
-                    _DrawerItem(
-                      icon: Icons.chat_bubble_outline,
-                      label: "chat".tr,
-                      onTap: () => _navigate(context, AppRoute.consultations),
-                    ),
-                    _DrawerItem(
-                      icon: Icons.assessment_outlined,
-                      label: "reports".tr,
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Get.snackbar("reports".tr, "comingSoon".tr);
-                      },
-                    ),
-                    _DrawerItem(
-                      icon: Icons.calculate_outlined,
-                      label: "bodyCalculations".tr,
-                      onTap: () => _navigate(context, "/bmi"),
-                    ),
+                      _DrawerItem(
+                        icon: Icons.edit_note,
+                        label: "editPersonalInfo".tr,
+                        onTap: () => _navigate(context, AppRoute.patientProfile),
+                      ),
+                    if (isPatientSubscribed) ...[
+                      _DrawerItem(
+                        icon: Icons.restaurant_menu_outlined,
+                        label: "myDiet".tr,
+                        onTap: () => _navigate(context, AppRoute.diet),
+                      ),
+                      _DrawerItem(
+                        icon: Icons.forum_outlined,
+                        label: "forums".tr,
+                        onTap: () => _navigate(context, AppRoute.forums),
+                      ),
+                    ],
+                    if (isDoctor)
+                      _DrawerItem(
+                        icon: Icons.assessment_outlined,
+                        label: "reports".tr,
+                        onTap: () => _navigate(context, AppRoute.doctorDiets),
+                      ),
+                    // _DrawerItem(
+                    //   icon: Icons.calculate_outlined,
+                    //   label: "bodyCalculations".tr,
+                    //   onTap: () => _navigate(context, "/bmi"),
+                    // ),
                     _DrawerItem(
                       icon: Icons.medical_services_outlined,
                       label: "medicalExaminations".tr,
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Get.snackbar("medicalExaminations".tr, "comingSoon".tr);
-                      },
+                      onTap: () => _navigate(context, AppRoute.medicalTests),
                     ),
                     _DrawerItem(
                       icon: Icons.help_outline,
                       label: "helpFiles".tr,
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Get.snackbar("helpFiles".tr, "comingSoon".tr);
-                      },
+                      onTap: () => _navigate(context, AppRoute.medicalFiles),
                     ),
                     _DrawerItem(
                       icon: Icons.language,

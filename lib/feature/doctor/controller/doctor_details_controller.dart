@@ -63,13 +63,18 @@ class DoctorDetailsController extends GetxController {
       );
     }
 
-    _userId = myServices.userId; // ✅ من service مباشرة
+    _userId = myServices.userId;
     _loadSubscribedState();
   }
+
 
   void _loadSubscribedState() {
     isSubscribed = myServices.isSubscribedToDoctor(doctor.id);
     update();
+  }
+
+  void refreshSubscribed() {
+    _loadSubscribedState();
   }
 
   void openVirtualPaymentSheet() {
@@ -77,12 +82,13 @@ class DoctorDetailsController extends GetxController {
       goToChat();
       return;
     }
+    goToSubscriptionInfo();
+  }
 
-    Get.bottomSheet(
-      const DoctorVirtualPaymentSheet(),
-      isScrollControlled: true,
-      backgroundColor: Get.theme.scaffoldBackgroundColor,
-    );
+  void goToSubscriptionInfo() {
+    Get.toNamed(AppRoute.subscriptionInfo, arguments: {
+      "doctor": doctor.toJson(),
+    });
   }
 
   void setPaymentMethod(String method) {

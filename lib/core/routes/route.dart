@@ -18,6 +18,8 @@ import '../../feature/chat/view/chat_page.dart';
 import '../../feature/chat/view/patient_profile_page.dart';
 import '../../feature/doctor/view/doctor_details_page.dart';
 import '../../feature/doctor/view/doctors_page.dart';
+import '../../feature/doctor/view/payment_invoice_page.dart';
+import '../../feature/doctor/subscription/subscription_info_page.dart';
 import '../../feature/splash/view/splash.dart';
 import '../../feature/welcome/view/welcome_page.dart';
 import '../../feature/forum/view/forum_posts_page.dart';
@@ -32,9 +34,20 @@ import '../../feature/settings/view/reminders_page.dart';
 import '../../feature/settings/view/team_page.dart';
 import '../../feature/consultations/view/consultations_page.dart';
 import '../../feature/diet/view/diet_page.dart';
+import '../../feature/diet/view/doctor_diets_page.dart';
 import '../../feature/diet/view/diet_meals_page.dart';
 import '../../feature/diet/view/create_diet_for_patient_page.dart';
+import '../../feature/diet/view/diet_periods_page.dart';
+import '../../feature/diet/view/diet_targets_page.dart';
+import '../../feature/diet/view/base_servings_page.dart';
+import '../../feature/diet/view/portion_categories_page.dart';
+import '../../feature/diet/view/portion_carb_page.dart';
+import '../../feature/diet/view/portion_protein_page.dart';
+import '../../feature/diet/view/diet_distribution_page.dart';
+import '../../feature/diet/view/determine_meals_page.dart';
 import '../../feature/step_counter/view/step_counter_page.dart';
+import '../../feature/medical_files/view/medical_files_page.dart';
+import '../../feature/medical_tests/view/medical_tests_page.dart';
 import 'app_route.dart';
 import 'binding.dart';
 
@@ -169,11 +182,35 @@ abstract class AppPages {
       binding: BmiBinding(),
       middlewares: [AuthMiddleware()],
     ),
+    GetPage(
+      name: AppRoute.medicalFiles,
+      page: () => const MedicalFilesPage(),
+      binding: MedicalFilesBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.medicalTests,
+      page: () => const MedicalTestsPage(),
+      binding: MedicalTestsBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
 
     GetPage(
       name: "/doctor-details",
       page: () => const DoctorDetailsPage(),
       binding: DoctorDetailsBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.subscriptionInfo,
+      page: () => const SubscriptionInfoPage(),
+      binding: SubscriptionInfoBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.paymentInvoice,
+      page: () => const PaymentInvoicePage(),
+      binding: PaymentInvoiceBinding(),
       middlewares: [AuthMiddleware()],
     ),
 
@@ -239,12 +276,67 @@ abstract class AppPages {
     ),
 
     GetPage(
+      name: AppRoute.doctorDiets,
+      page: () => const DoctorDietsPage(),
+      binding: DietBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+
+    GetPage(
       name: AppRoute.dietMeals,
       page: () => const DietMealsPage(),
       binding: DietBinding(),
       middlewares: [PatientOnlyMiddleware()], // Only patients can view their meals
     ),
 
+    GetPage(
+      name: AppRoute.dietPeriods,
+      page: () => const DietPeriodsPage(),
+      binding: DietPeriodsBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.dietTargets,
+      page: () => const DietTargetsPage(),
+      binding: DietTargetsBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.dietBaseServings,
+      page: () => const BaseServingsPage(),
+      binding: BaseServingsBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.dietPortionCategories,
+      page: () => const PortionCategoriesPage(),
+      binding: PortionCategoriesBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.dietPortionCarb,
+      page: () => const PortionCarbPage(),
+      binding: PortionCarbBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.dietPortionProtein,
+      page: () => const PortionProteinPage(),
+      binding: PortionProteinBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.dietDistribution,
+      page: () => const DietDistributionPage(),
+      binding: DietDistributionBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
+    GetPage(
+      name: AppRoute.dietDetermineMeals,
+      page: () => const DetermineMealsPage(),
+      binding: DetermineMealsBinding(),
+      middlewares: [DoctorOnlyMiddleware()],
+    ),
     GetPage(
       name: AppRoute.createDietForPatient,
       page: () => const CreateDietForPatientPage(),

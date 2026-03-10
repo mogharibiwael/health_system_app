@@ -20,18 +20,20 @@ class DietMealsPage extends GetView<DietController> {
 
         return SafeArea(
           child: Scaffold(
-          appBar: CustomAppBar(
-            title: "dietMeals".tr,
-            showBackButton: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Color(0xff4a3f6a)),
-                onPressed: c.loadMeals,
-              ),
-            ],
+            backgroundColor: Colors.grey.shade100,
+            appBar: CustomAppBar(
+              title: "dietMeals".tr,
+              showBackButton: true,
+              showLogo: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Color(0xff4a3f6a)),
+                  onPressed: c.loadMeals,
+                ),
+              ],
+            ),
+            body: _buildBody(c),
           ),
-          body: _buildBody(c),
-        ),
         );
       },
     );
@@ -87,10 +89,17 @@ class DietMealsPage extends GetView<DietController> {
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: Card(
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColor.shadowColor.withOpacity(0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -106,45 +115,78 @@ class DietMealsPage extends GetView<DietController> {
                     ),
                     const SizedBox(height: 12),
                     ...dayMeals.map((meal) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      meal.mealTypeDisplay,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          meal.mealTypeDisplay,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        if (meal.mealName.isNotEmpty)
+                                          Text(
+                                            meal.mealName,
+                                            style: TextStyle(
+                                              color: Colors.grey.shade700,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        if (meal.servingSummary != null &&
+                                            meal.servingSummary!.isNotEmpty &&
+                                            meal.servingSummary != "-") ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            meal.servingSummary!,
+                                            style: TextStyle(
+                                              color: AppColor.primary,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
-                                    Text(
-                                      meal.mealName,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColor.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      "${meal.calories} kcal",
                                       style: TextStyle(
-                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColor.primary,
+                                        fontSize: 13,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColor.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  "${meal.calories} kcal",
+                              if (meal.carbsG != null ||
+                                  meal.proteinG != null ||
+                                  meal.fatG != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  "C: ${meal.carbsG ?? 0}g  P: ${meal.proteinG ?? 0}g  F: ${meal.fatG ?? 0}g",
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColor.primary,
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                         )),

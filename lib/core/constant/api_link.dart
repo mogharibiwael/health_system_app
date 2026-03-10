@@ -20,7 +20,10 @@
    static const String chatMessages = "$baseUrl/chat/messages";
    static const String chatHistory = "$baseUrl/chat/history"; // + /{doctorId}
    static const String doctorPatients = "$baseUrl/doctor/patients";
-   static String doctorPatientMacros(int patientId) => "$baseUrl/doctor/patients/$patientId/macros"; // GET + PUT
+   static const String doctorProfile = "$baseUrl/doctor/profile"; // GET current doctor (auth)
+   static String doctorPatient(int patientId) => "$baseUrl/patients/$patientId"; // GET single patient
+   static String patient(int patientId) => "$baseUrl/patients/$patientId/"; // GET single patient with subscription info
+   static String doctorPatientMacros(int patientId) => "$baseUrl/patients/$patientId"; // GET + PUT
    static const String patientProfile = "$baseUrl/patients/profile";
 
    // forums (per API doc: GET /forums, POST /forums/{id}/join, GET /forums/{id}/posts, POST /forums/{id}/posts)
@@ -31,9 +34,25 @@
    static const String consultations = "$baseUrl/consultations";        // POST to request, GET to list
 
    // diet
-   static const String myDiet = "$baseUrl/my-diet";                    // GET current diet
+   static const String diets = "$baseUrl/diets";                      // GET all
+   static const String dietPlans = "$baseUrl/diet-plans";              // POST create
+   static String diet(int id) => "$baseUrl/diets/$id";                // GET, PUT, DELETE
+   static String dietPlan(int id) => "$baseUrl/diet-plans/$id";       // GET single diet plan (full details)
+   static String dietStatus(int id) => "$baseUrl/diets/$id/status";   // PUT change status
+   static const String myDiet = "$baseUrl/my-diet";                   // GET current patient diet
    static const String myDietMeals = "$baseUrl/my-diet/meals";        // GET diet meals
-   static const String dietPlans = "$baseUrl/diet-plans";             // POST create/assign diet plan (for doctors)
+   static const String dietPeriods = "$baseUrl/diet-periods";         // GET diet periods
+   static const String dietComponents = "$baseUrl/diet-components";   // GET diet components
+   static const String dietNotes = "$baseUrl/diet-notes";             // GET diet notes
+   static const String dietTypes = "$baseUrl/diet-types";             // GET diet types
+
+  // medical files (الملفات المساعدة)
+  static const String medicalFiles = "$baseUrl/medical-files";
+  static String medicalFileDownload(int id) => "$baseUrl/medical-files/$id/download";
+
+  // medical tests (الفحص الطبي) - patient uploads from chat
+  static const String medicalTests = "$baseUrl/medical-tests";
+  static String medicalTestDownload(int id) => "$baseUrl/medical-tests/$id/download";
 
    // public (no auth - no token required)
    static const String publicAds = "$baseUrl/public/ads";

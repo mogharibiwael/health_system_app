@@ -60,13 +60,21 @@ class HomePage extends GetView<HomeController> {
                         // ─── Ads carousel (placeholder when API empty) ───
                         _buildAdsCarousel(controller),
                         const SizedBox(height: 28),
-                        // ─── 7 buttons ───
-                        _HomeMenuButton(
-                          title: "myDiet".tr,
-                          icon: Icons.restaurant_menu_outlined,
-                          onTap: controller.goDiet,
-                        ),
-                        const SizedBox(height: 12),
+                        // ─── Menu buttons (My Diet & Forum only when subscribed) ───
+                        if (controller.isSubscribed) ...[
+                          _HomeMenuButton(
+                            title: "myDiet".tr,
+                            icon: Icons.restaurant_menu_outlined,
+                            onTap: controller.goDiet,
+                          ),
+                          const SizedBox(height: 12),
+                          _HomeMenuButton(
+                            title: "forums".tr,
+                            icon: Icons.forum_outlined,
+                            onTap: controller.goForums,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         _HomeMenuButton(
                           title: "tips".tr,
                           icon: Icons.lightbulb_outline,

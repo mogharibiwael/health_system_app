@@ -1,10 +1,12 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nutri_guide/core/class/crud.dart';
 import 'package:nutri_guide/core/class/status_request.dart';
 import 'package:nutri_guide/core/function/handel_data.dart';
 import 'package:nutri_guide/core/routes/app_route.dart';
 import 'package:nutri_guide/feature/auth/data/login_data.dart';
+import 'package:nutri_guide/feature/doctor/data/subscription_data.dart';
 import '../../../core/function/show_dialog.dart';
 import '../../../core/service/serviecs.dart';
 
@@ -95,17 +97,23 @@ class LoginController extends GetxController {
               ? Map<String, dynamic>.from(r['user'])
               : <String, dynamic>{};
 
-          // ✅ Laravel returns "role": doctor/patient
-          final userType = (userMap['type'] ?? 'patient')
-              .toString()
-              .trim()
-              .toLowerCase();
+          // Infer type: explicit "type" or "doctor" if user has doctor object
+          String userType = (userMap['type'] ?? '').toString().trim().toLowerCase();
+          if (userType.isEmpty && userMap['doctor'] != null) {
+            userType = 'doctor';
+          }
+          if (userType.isEmpty) userType = 'user';
 
           await myServices.saveSession(
             token: token.toString(),
             type: userType, // store doctor/patient in "type"
             user: userMap.isEmpty ? null : userMap,
           );
+
+          // Load subscriptions from backend for patients (so Chat shows for subscribed doctors after re-login)
+          if (userType == "user" || userType == "patient" || userType == "payed") {
+            _loadSubscriptionsFromBackend(token.toString());
+          }
 
           statusRequest = StatusRequest.success;
           update();
@@ -131,6 +139,32 @@ class LoginController extends GetxController {
 
   goToSignup() => Get.toNamed(AppRoute.signUp);
   goToForget() => Get.toNamed(AppRoute.forgotPassword);
+
+  Future<void> _loadSubscriptionsFromBackend(String token) async {
+    try {
+      final subscriptionData = SubscriptionData(Get.find<Crud>());
+      final res = await subscriptionData.getMySubscriptions(token: token);
+      res.fold(
+        (_) {},
+        (r) {
+          final raw = r["data"] ?? r["subscriptions"] ?? r;
+          final list = raw is List ? raw : <dynamic>[];
+          final doctorIds = <int>{};
+          for (final e in list) {
+            if (e is! Map) continue;
+            final did = e["doctor_id"] ?? e["doctorId"];
+            if (did != null) {
+              final id = did is int ? did : int.tryParse(did.toString());
+              if (id != null && id > 0) doctorIds.add(id);
+            }
+          }
+          if (doctorIds.isNotEmpty) {
+            myServices.setSubscribedDoctorIds(doctorIds);
+          }
+        },
+      );
+    } catch (_) {}
+  }
 
   @override
   void onInit() {

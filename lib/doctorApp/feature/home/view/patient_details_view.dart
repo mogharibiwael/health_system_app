@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nutri_guide/core/class/status_request.dart';
 import 'package:nutri_guide/core/constant/theme/colors.dart';
+import 'package:nutri_guide/core/routes/app_route.dart';
 import 'package:nutri_guide/core/shared/widgets/app_bar.dart';
 import '../controller/patient_details_controller.dart';
 
@@ -17,7 +18,9 @@ class PatientDetailsPage extends GetView<PatientDetailsController> {
         child: Scaffold(
           backgroundColor: Colors.grey.shade100,
           appBar: CustomAppBar(
-            title: c.patient.fullname,
+            title: c.patient.fullname.trim().isNotEmpty && c.patient.fullname != "-"
+                ? c.patient.fullname
+                : "patientInformation".tr,
             showBackButton: true,
             showLogo: true,
           ),
@@ -124,6 +127,9 @@ class _PatientInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = controller;
     final genderTr = _genderLabel(c.patient.gender);
+    print("genderTr---------------");
+    print(genderTr);
+    print("genderTr---------------");
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -160,6 +166,22 @@ class _PatientInfoSection extends StatelessWidget {
             value: c.patient.phoneNumber ?? "-",
             icon: Icons.phone_outlined,
           ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Get.toNamed(
+              AppRoute.medicalTests,
+              arguments: {
+                "user_id": c.patient.userId,
+                "patient_name": c.patient.fullname,
+              },
+            ),
+            icon: const Icon(Icons.medical_services_outlined, size: 20),
+            label: Text("medicalExaminations".tr),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColor.primary,
+              side: BorderSide(color: AppColor.primary),
+            ),
+          ),
         ],
       ),
     );
@@ -168,8 +190,8 @@ class _PatientInfoSection extends StatelessWidget {
   String _genderLabel(String? g) {
     if (g == null || g.isEmpty) return "-";
     final lower = g.toLowerCase();
+    if (lower.contains('f') || lower.contains('انثى')) return "female".tr;
     if (lower.contains('m') || lower.contains('ذكر')) return "male".tr;
-    if (lower.contains('f') || lower.contains('انث')) return "female".tr;
     return g;
   }
 }
@@ -315,50 +337,98 @@ class _MacrosSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _MacroStepper(
+          _CalcRow("totalCalories".tr, c.dailyCalories?.toStringAsFixed(0) ?? "-"),
+          const SizedBox(height: 12),
+          Text(
+            "macroSumMustBe100".tr,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 12),
+          _MacroPercentStepper(
             label: "carbohydrates".tr,
-            controller: c.carbsController,
+            value: c.carbsPercent,
+            rangeText: "50-65%",
             onIncrement: c.incrementCarbs,
             onDecrement: c.decrementCarbs,
           ),
           const SizedBox(height: 12),
-          _MacroStepper(
+          _MacroPercentStepper(
             label: "protein".tr,
-            controller: c.proteinController,
+            value: c.proteinPercent,
+            rangeText: "15-25%",
             onIncrement: c.incrementProtein,
             onDecrement: c.decrementProtein,
           ),
           const SizedBox(height: 12),
-          _MacroStepper(
+          _MacroPercentStepper(
             label: "fats".tr,
-            controller: c.fatsController,
+            value: c.fatPercent,
+            rangeText: "25-35%",
             onIncrement: c.incrementFats,
             onDecrement: c.decrementFats,
           ),
+          if (!c.macroSumValid)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                "macroSumMustBe100".tr,
+                style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              "Sum: ${c.macroSum}%",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: c.macroSumValid ? Colors.green : Colors.orange,
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: c.saveMacrosStatus == StatusRequest.loading ? null : c.saveMacros,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: c.saveMacrosStatus == StatusRequest.loading ? null : c.saveMacros,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: c.saveMacrosStatus == StatusRequest.loading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text("saveChanges".tr),
                 ),
               ),
-              child: c.saveMacrosStatus == StatusRequest.loading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text("saveChanges".tr),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: c.openCreateDiet,
+                  icon: const Icon(Icons.restaurant_menu_outlined, size: 20),
+                  label: Text("createDietForPatient".tr),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColor.primary,
+                    side: BorderSide(color: AppColor.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -366,23 +436,23 @@ class _MacrosSection extends StatelessWidget {
   }
 }
 
-class _MacroStepper extends StatelessWidget {
+class _MacroPercentStepper extends StatelessWidget {
   final String label;
-  final TextEditingController controller;
+  final int value;
+  final String rangeText;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
 
-  const _MacroStepper({
+  const _MacroPercentStepper({
     required this.label,
-    required this.controller,
+    required this.value,
+    required this.rangeText,
     required this.onIncrement,
     required this.onDecrement,
   });
 
   @override
   Widget build(BuildContext context) {
-    final value = controller.text;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -396,7 +466,7 @@ class _MacroStepper extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          "${"servingsInGrams".tr}: $value",
+          "${"macroPercent".tr}: $rangeText",
           style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
         ),
         const SizedBox(height: 6),
@@ -415,7 +485,7 @@ class _MacroStepper extends StatelessWidget {
             SizedBox(
               width: 60,
               child: Text(
-                value,
+                "$value%",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,

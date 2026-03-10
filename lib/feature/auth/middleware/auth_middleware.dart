@@ -35,9 +35,6 @@ class GuestMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     // لو في جلسة -> روح حسب type
-    print("myServices.type");
-    print(myServices.type);
-    print("myServices.type");
     if (myServices.isLoggedIn) {
       final t = (myServices.type ?? "user").toString();
       return RouteSettings(

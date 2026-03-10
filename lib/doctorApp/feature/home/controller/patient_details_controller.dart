@@ -11,9 +11,15 @@ class PatientDetailsController extends GetxController {
   final DoctorPatientsData patientsData = DoctorPatientsData(Get.find());
   final MyServices myServices = Get.find();
 
-  final TextEditingController carbsController = TextEditingController();
-  final TextEditingController fatsController = TextEditingController();
-  final TextEditingController proteinController = TextEditingController();
+  /// Macro percentages (carbs 50-65, protein 15-25, fat 25-35). Sum must = 100.
+  static const int carbsMin = 50, carbsMax = 65;
+  static const int proteinMin = 15, proteinMax = 25;
+  static const int fatMin = 25, fatMax = 35;
+  static const int carbsDefault = 55, proteinDefault = 20, fatDefault = 25;
+
+  int carbsPercent = carbsDefault;
+  int proteinPercent = proteinDefault;
+  int fatPercent = fatDefault;
 
   bool isEditingMacros = false;
   StatusRequest macrosStatus = StatusRequest.success;
@@ -51,13 +57,86 @@ class PatientDetailsController extends GetxController {
     }
 
     _setMacrosFromPatient();
-    if (patient.id > 0) _loadMacros();
+    if (patient.id > 0) {
+      _loadMacros();
+      _loadPatientDetailsIfNeeded();
+    }
+  }
+
+
+  @override
+  void onReady() {
+    print("patient---------");
+    print(patient.id);
+    print("patient----------");
+  }
+
+  /// Always fetch patient details - backend may return patient_id for diet-plans.
+  Future<void> _loadPatientDetailsIfNeeded() async {
+    final res = await patientsData.getPatientDetails(
+      patientId: patient.id,
+      token: myServices.token,
+    );
+    res.fold((_) {}, (r) => _applyPatientDetails(r));
+  }
+
+  void _applyPatientDetails(Map<String, dynamic> r) {
+    final data = r["data"] is Map ? r["data"] as Map<String, dynamic> : r;
+    if (data is! Map<String, dynamic>) return;
+    final updated = PatientModel.fromJson(data);
+    print("[PatientDetails] patient: id=${updated.id} user_id=${updated.userId} patientIdForDiet=${updated.patientIdForDiet}");
+    patient = patient.copyWith(
+      id: updated.id > 0 ? updated.id : null,
+      userId: updated.userId > 0 ? updated.userId : null,
+      patientIdForDiet: updated.patientIdForDiet,
+      fullname: updated.fullname,
+      gender: updated.gender ?? patient.gender,
+      height: updated.height ?? patient.height,
+      weight: updated.weight ?? patient.weight,
+      phoneNumber: updated.phoneNumber ?? patient.phoneNumber,
+      birthdate: updated.birthdate ?? patient.birthdate,
+      physicalActivity: updated.physicalActivity ?? patient.physicalActivity,
+      medical: updated.medical ?? patient.medical,
+      user: updated.user ?? patient.user,
+    );
+    update();
   }
 
   void _setMacrosFromPatient() {
-    carbsController.text = patient.carbohydrates != null ? patient.carbohydrates!.toStringAsFixed(2) : "0";
-    fatsController.text = patient.fats != null ? patient.fats!.toStringAsFixed(2) : "0";
-    proteinController.text = patient.protein != null ? patient.protein!.toStringAsFixed(2) : "0";
+    final cal = dailyCalories ?? 2000.0;
+    final carbsG = patient.carbohydrates;
+    final fatG = patient.fats;
+    final proteinG = patient.protein;
+    if (carbsG != null && fatG != null && proteinG != null && cal > 0) {
+      carbsPercent = ((carbsG * 4) / cal * 100).round().clamp(carbsMin, carbsMax);
+      proteinPercent = ((proteinG * 4) / cal * 100).round().clamp(proteinMin, proteinMax);
+      fatPercent = ((fatG * 9) / cal * 100).round().clamp(fatMin, fatMax);
+      _normalizeMacroSum();
+    } else {
+      carbsPercent = carbsDefault;
+      proteinPercent = proteinDefault;
+      fatPercent = fatDefault;
+    }
+  }
+
+  void _normalizeMacroSum() {
+    int sum = carbsPercent + proteinPercent + fatPercent;
+    if (sum == 100) return;
+    int diff = 100 - sum;
+    while (diff != 0 && (carbsPercent != carbsMin || proteinPercent != proteinMin || fatPercent != fatMin) &&
+        (carbsPercent != carbsMax || proteinPercent != proteinMax || fatPercent != fatMax)) {
+      if (diff > 0) {
+        if (fatPercent < fatMax) { fatPercent++; diff--; }
+        else if (proteinPercent < proteinMax) { proteinPercent++; diff--; }
+        else if (carbsPercent < carbsMax) { carbsPercent++; diff--; }
+        else break;
+      } else {
+        if (fatPercent > fatMin) { fatPercent--; diff++; }
+        else if (proteinPercent > proteinMin) { proteinPercent--; diff++; }
+        else if (carbsPercent > carbsMin) { carbsPercent--; diff++; }
+        else break;
+      }
+    }
   }
 
   Future<void> _loadMacros() async {
@@ -78,14 +157,12 @@ class PatientDetailsController extends GetxController {
       final carbs = data["carbohydrates"];
       final fats = data["fats"];
       final protein = data["protein"];
-      if (carbs != null) carbsController.text = num.tryParse(carbs.toString())?.toStringAsFixed(2) ?? "0";
-      if (fats != null) fatsController.text = num.tryParse(fats.toString())?.toStringAsFixed(2) ?? "0";
-      if (protein != null) proteinController.text = num.tryParse(protein.toString())?.toStringAsFixed(2) ?? "0";
       patient = patient.copyWith(
         carbohydrates: carbs != null ? (num.tryParse(carbs.toString())?.toDouble()) : null,
         fats: fats != null ? (num.tryParse(fats.toString())?.toDouble()) : null,
         protein: protein != null ? (num.tryParse(protein.toString())?.toDouble()) : null,
       );
+      _setMacrosFromPatient();
       update();
     });
   }
@@ -96,46 +173,80 @@ class PatientDetailsController extends GetxController {
     update();
   }
 
-  double _currentMacroValue(TextEditingController c, double fallback) {
-    final v = double.tryParse(c.text.trim());
-    return v ?? fallback;
+  /// When we increment one macro, reduce another by 1 to keep sum=100.
+  void _reduceOtherForIncrement(int exclude) {
+    if (exclude != 1 && fatPercent > fatMin) {
+      fatPercent--;
+      return;
+    }
+    if (exclude != 2 && proteinPercent > proteinMin) {
+      proteinPercent--;
+      return;
+    }
+    if (exclude != 3 && carbsPercent > carbsMin) {
+      carbsPercent--;
+    }
+  }
+
+  /// When we decrement one macro, increase another by 1 to keep sum=100.
+  void _increaseOtherForDecrement(int exclude) {
+    if (exclude != 1 && fatPercent < fatMax) {
+      fatPercent++;
+      return;
+    }
+    if (exclude != 2 && proteinPercent < proteinMax) {
+      proteinPercent++;
+      return;
+    }
+    if (exclude != 3 && carbsPercent < carbsMax) {
+      carbsPercent++;
+    }
   }
 
   void incrementCarbs() {
-    final v = _currentMacroValue(carbsController, patient.carbohydrates ?? 0) + 0.25;
-    carbsController.text = v.toStringAsFixed(2);
+    if (carbsPercent >= carbsMax) return;
+    carbsPercent++;
+    _reduceOtherForIncrement(1);
     update();
   }
 
   void decrementCarbs() {
-    final v = (_currentMacroValue(carbsController, patient.carbohydrates ?? 0) - 0.25).clamp(0.0, 9999.0);
-    carbsController.text = v.toStringAsFixed(2);
+    if (carbsPercent <= carbsMin) return;
+    carbsPercent--;
+    _increaseOtherForDecrement(1);
     update();
   }
 
   void incrementProtein() {
-    final v = _currentMacroValue(proteinController, patient.protein ?? 0) + 0.25;
-    proteinController.text = v.toStringAsFixed(2);
+    if (proteinPercent >= proteinMax) return;
+    proteinPercent++;
+    _reduceOtherForIncrement(2);
     update();
   }
 
   void decrementProtein() {
-    final v = (_currentMacroValue(proteinController, patient.protein ?? 0) - 0.25).clamp(0.0, 9999.0);
-    proteinController.text = v.toStringAsFixed(2);
+    if (proteinPercent <= proteinMin) return;
+    proteinPercent--;
+    _increaseOtherForDecrement(2);
     update();
   }
 
   void incrementFats() {
-    final v = _currentMacroValue(fatsController, patient.fats ?? 0) + 0.25;
-    fatsController.text = v.toStringAsFixed(2);
+    if (fatPercent >= fatMax) return;
+    fatPercent++;
+    _reduceOtherForIncrement(3);
     update();
   }
 
   void decrementFats() {
-    final v = (_currentMacroValue(fatsController, patient.fats ?? 0) - 0.25).clamp(0.0, 9999.0);
-    fatsController.text = v.toStringAsFixed(2);
+    if (fatPercent <= fatMin) return;
+    fatPercent--;
+    _increaseOtherForDecrement(3);
     update();
   }
+
+  int get macroSum => carbsPercent + proteinPercent + fatPercent;
+  bool get macroSumValid => macroSum == 100;
 
   /// Age in years from birthdate (YYYY-MM-DD or similar)
   int? get patientAge {
@@ -148,19 +259,22 @@ class PatientDetailsController extends GetxController {
     return DateTime.now().year - year;
   }
 
-  /// BMR (Mifflin-St Jeor). Gender: male/female or Arabic equivalents.
+  /// BMR (Mifflin-St Jeor). Men: (10×Weight)+(6.25×Height)-(5×Age)+5. Women: -161 instead of +5.
+  /// Weight in kg, Height in cm (or meters if < 10, auto-converted).
   double? get bmr {
     final w = patient.weight;
-    final h = patient.height;
+    final hRaw = patient.height;
     final age = patientAge;
-    if (w == null || h == null || age == null || w <= 0 || h <= 0) return null;
+    if (w == null || hRaw == null || age == null || w <= 0 || hRaw <= 0) return null;
+    final h = (hRaw > 0 && hRaw < 10) ? hRaw * 100 : hRaw; // meters → cm
     final isFemale = (patient.gender ?? '').toLowerCase().contains('f') ||
         (patient.gender ?? '').contains('انث') ||
+        (patient.gender ?? '').contains('انثى') ||
         (patient.gender ?? '').contains('female');
     if (isFemale) {
-      return 10 * w + 6.25 * h - 5 * age - 161;
+      return (10 * w) + (6.25 * h) - (5 * age) - 161;
     }
-    return 10 * w + 6.25 * h - 5 * age + 5;
+    return (10 * w) + (6.25 * h) - (5 * age) + 5;
   }
 
   /// Calories = BMR * activity multiplier
@@ -172,23 +286,30 @@ class PatientDetailsController extends GetxController {
   }
 
   double? get bmi {
-    final h = patient.height;
+    final hRaw = patient.height;
     final w = patient.weight;
-    if (h == null || w == null || h <= 0) return null;
+    if (hRaw == null || w == null || hRaw <= 0) return null;
+    final h = (hRaw > 0 && hRaw < 10) ? hRaw * 100 : hRaw; // meters → cm
     return w / ((h / 100) * (h / 100));
   }
 
   double get activityMultiplier => double.tryParse(patient.physicalActivity ?? '') ?? 1.3;
 
   Future<void> saveMacros() async {
-    final carbs = double.tryParse(carbsController.text.trim());
-    final fats = double.tryParse(fatsController.text.trim());
-    final protein = double.tryParse(proteinController.text.trim());
-
-    if (carbs == null || fats == null || protein == null) {
-      Get.snackbar("error".tr, "fillFields".tr);
+    if (!macroSumValid) {
+      Get.snackbar("error".tr, "macroSumMustBe100".tr);
       return;
     }
+
+    final cal = dailyCalories;
+    if (cal == null || cal <= 0) {
+      Get.snackbar("error".tr, "fillPatientProfile".tr);
+      return;
+    }
+
+    final carbs = (cal * carbsPercent / 100) / 4;
+    final protein = (cal * proteinPercent / 100) / 4;
+    final fats = (cal * fatPercent / 100) / 9;
 
     saveMacrosStatus = StatusRequest.loading;
     update();
@@ -216,32 +337,79 @@ class PatientDetailsController extends GetxController {
       saveMacrosStatus = StatusRequest.success;
       patient = patient.copyWith(carbohydrates: carbs, fats: fats, protein: protein);
       isEditingMacros = false;
+      _setMacrosFromPatient();
       update();
       Get.snackbar("success".tr, "saved".tr);
     });
   }
 
-  void openCreateDiet() {
-    final doctorId = myServices.userId;
-    if (doctorId == null) {
+  Future<void> openCreateDiet() async {
+    // Backend expects doctor_id (doctors table id), not user_id. Use doctorId from session or fetch profile.
+    int? doctorId = myServices.doctorId;
+    if (doctorId == null && myServices.isDoctor) {
+      final res = await patientsData.getDoctorProfile(token: myServices.token);
+      res.fold(
+        (l) {
+          Get.snackbar("error".tr, "Could not load doctor profile");
+        },
+        (r) {
+          final data = r["data"] is Map ? r["data"] as Map<String, dynamic> : r;
+          final id = data["id"];
+          doctorId = id is int ? id : int.tryParse(id?.toString() ?? "");
+          if (doctorId != null && doctorId! > 0) {
+            _fetchAndNavigateToDiet(doctorId!);
+          } else {
+            Get.snackbar("error".tr, "Doctor profile invalid");
+          }
+        },
+      );
+      return;
+    }
+    if (doctorId == null || doctorId <= 0) {
       Get.snackbar("error".tr, "Session error");
       return;
     }
+    await _fetchAndNavigateToDiet(doctorId);
+  }
+
+  /// Fetch patient details before navigating - use patient from PatientDetailsController for diet creation.
+  Future<void> _fetchAndNavigateToDiet(int doctorId) async {
+    final res = await patientsData.getPatientDetails(
+      patientId: patient.id,
+      token: myServices.token,
+    );
+    res.fold((_) => _navigateToDietPeriods(doctorId), (r) => _applyPatientAndNavigate(r, doctorId));
+  }
+
+  void _applyPatientAndNavigate(Map<String, dynamic> r, int doctorId) {
+    final data = r["data"] is Map ? r["data"] as Map<String, dynamic> : r;
+    if (data is Map<String, dynamic>) {
+      final updated = PatientModel.fromJson(data);
+      print("[PatientDetails] patient for diet: id=${updated.id} user_id=${updated.userId} patientIdForDiet=${updated.patientIdForDiet} effective=${updated.effectivePatientId}");
+      patient = patient.copyWith(
+        id: updated.id > 0 ? updated.id : null,
+        userId: updated.userId > 0 ? updated.userId : null,
+        patientIdForDiet: updated.patientIdForDiet,
+        fullname: updated.fullname,
+      );
+    }
+    _navigateToDietPeriods(doctorId);
+  }
+
+  void _navigateToDietPeriods(int doctorId) {
     Get.toNamed(
-      AppRoute.createDietForPatient,
+      AppRoute.dietPeriods,
       arguments: {
-        "patient_id": patient.id,
+        "patient_id": patient.effectivePatientId,
         "patient_name": patient.fullname,
         "doctor_id": doctorId,
+        "patient": patient,
       },
     );
   }
 
   @override
   void onClose() {
-    carbsController.dispose();
-    fatsController.dispose();
-    proteinController.dispose();
     super.onClose();
   }
 }

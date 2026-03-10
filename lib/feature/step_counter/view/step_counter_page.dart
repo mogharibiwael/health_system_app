@@ -7,9 +7,6 @@ import 'package:nutri_guide/feature/step_counter/controller/step_counter_control
 class StepCounterPage extends GetView<StepCounterController> {
   const StepCounterPage({super.key});
 
-  static const Color _lightLavender = Color(0xffe4e0ec);
-  static const Color _darkPurple = Color(0xff4a3f6a);
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -36,7 +33,7 @@ class StepCounterPage extends GetView<StepCounterController> {
                         shape: BoxShape.circle,
                         color: Colors.transparent,
                         border: Border.all(
-                          color: _lightLavender,
+                          color: AppColor.primary,
                           width: 12,
                         ),
                         boxShadow: [
@@ -53,7 +50,7 @@ class StepCounterPage extends GetView<StepCounterController> {
                           Icon(
                             Icons.directions_walk,
                             size: 48,
-                            color: Colors.black87,
+                            color: AppColor.primary,
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -90,14 +87,14 @@ class StepCounterPage extends GetView<StepCounterController> {
                         ? null
                         : () => controller.startCounting(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _darkPurple,
+                      backgroundColor: AppColor.primary,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: _darkPurple.withOpacity(0.6),
+                      disabledBackgroundColor: AppColor.primary.withOpacity(0.6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 4,
-                      shadowColor: AppColor.shadowColor.withOpacity(0.4),
+                      shadowColor: AppColor.primary.withOpacity(0.4),
                     ),
                     child: Text(
                       isCounting ? "stepCounter".tr : "startCounting".tr,

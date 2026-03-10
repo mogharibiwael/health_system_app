@@ -18,6 +18,8 @@ class PatientModel {
 
   final int userId;
   final PatientUserModel? user;
+  /// When API returns patient_id (e.g. from doctor/patients), use for diet-plans
+  final int? patientIdForDiet;
 
   PatientModel({
     required this.id,
@@ -35,7 +37,21 @@ class PatientModel {
     this.fats,
     this.protein,
     this.user,
+    this.patientIdForDiet,
   });
+
+  /// Map subscription/profile activity names to multiplier for BMR/TDEE
+  static double _activityToMultiplier(String? activity) {
+    if (activity == null || activity.isEmpty) return 1.3;
+    final a = activity.toLowerCase();
+    if (a == 'sedentary') return 1.2;
+    if (a == 'light' || a == 'low') return 1.3;
+    if (a == 'moderate') return 1.5;
+    if (a == 'active') return 1.7;
+    if (a == 'very_active') return 1.9;
+    final num = double.tryParse(activity);
+    return num ?? 1.3;
+  }
 
   factory PatientModel.fromJson(Map<String, dynamic> json) {
     double? _toDouble(dynamic v) {
@@ -49,48 +65,94 @@ class PatientModel {
       return int.tryParse(v.toString()) ?? 0;
     }
 
+    // Merge nested subscription, profile, or patient (from doctor/patients) if present
+    final sub = json["subscription"] is Map
+        ? Map<String, dynamic>.from(json["subscription"] as Map)
+        : null;
+    final profile = json["profile"] is Map
+        ? Map<String, dynamic>.from(json["profile"] as Map)
+        : null;
+    final nestedPatient = json["patient"] is Map
+        ? Map<String, dynamic>.from(json["patient"] as Map)
+        : null;
+    var j = json;
+    if (sub != null || profile != null || nestedPatient != null) {
+      j = {...json, ...?sub, ...?profile, ...?nestedPatient};
+    }
+
+    // Prefer patient_id when present (doctor/patients may return it for diet-plans)
+    final patientIdVal = _toInt(j["patient_id"]);
+    final idVal = _toInt(j["id"]);
+    final resolvedPatientIdForDiet = patientIdVal > 0 ? patientIdVal : null;
+
+    // GET /api/patients/{id} returns: id, user_id, name, date_of_birth, current_weight, height, medical_history, physical_activity
+    final height = _toDouble(j["height"]) ?? _toDouble(j["height_cm"]);
+    final weight = _toDouble(j["weight"]) ?? _toDouble(j["weight_kg"]) ?? _toDouble(j["current_weight"]);
+    final birthdate = j["birthdate"]?.toString() ?? j["date_of_birth"]?.toString();
+    final physAct = j["physical_activity"]?.toString() ?? j["activity"]?.toString();
+    final physActVal = physAct != null ? _activityToMultiplier(physAct).toString() : null;
+    final fullname = (j["name"] ?? j["fullname"] ?? j["full_name"] ?? "-").toString();
+    final medical = j["medical"]?.toString() ?? j["medical_history"]?.toString();
+
     return PatientModel(
-      id: _toInt(json["id"]),
-      fullname: (json["fullname"] ?? "-").toString(),
-      gender: json["gender"]?.toString(),
-      height: _toDouble(json["height"]),
-      weight: _toDouble(json["weight"]),
-      phoneNumber: json["phone_number"]?.toString(),
-      image: json["image"]?.toString(),
-      birthdate: json["birthdate"]?.toString(),
-      physicalActivity: json["physical_activity"]?.toString(),
-      medical: json["medical"]?.toString(),
-      carbohydrates: _toDouble(json["carbohydrates"]),
-      fats: _toDouble(json["fats"]),
-      protein: _toDouble(json["protein"]),
-      userId: _toInt(json["user_id"]),
-      user: (json["user"] is Map)
-          ? PatientUserModel.fromJson(Map<String, dynamic>.from(json["user"]))
+      id: idVal,
+      fullname: fullname,
+      gender: j["gender"]?.toString(),
+      height: height,
+      weight: weight,
+      phoneNumber: j["phone_number"]?.toString() ?? j["phone"]?.toString(),
+      image: j["image"]?.toString(),
+      birthdate: birthdate,
+      physicalActivity: physActVal ?? physAct,
+      medical: medical,
+      carbohydrates: _toDouble(j["carbohydrates"]),
+      fats: _toDouble(j["fats"]),
+      protein: _toDouble(j["protein"]),
+      userId: _toInt(j["user_id"]),
+      user: (j["user"] is Map)
+          ? PatientUserModel.fromJson(Map<String, dynamic>.from(j["user"]))
           : null,
+      patientIdForDiet: resolvedPatientIdForDiet,
     );
   }
 
+  /// ID to send for diet-plans API - prefers patient_id from API when available
+  int get effectivePatientId => (patientIdForDiet ?? id);
+
   PatientModel copyWith({
+    int? id,
+    int? userId,
+    int? patientIdForDiet,
+    String? fullname,
+    String? gender,
+    double? height,
+    double? weight,
+    String? phoneNumber,
+    String? birthdate,
+    String? physicalActivity,
+    String? medical,
     double? carbohydrates,
     double? fats,
     double? protein,
+    PatientUserModel? user,
   }) {
     return PatientModel(
-      id: id,
-      fullname: fullname,
-      userId: userId,
-      gender: gender,
-      height: height,
-      weight: weight,
-      phoneNumber: phoneNumber,
+      id: id ?? this.id,
+      fullname: fullname ?? this.fullname,
+      userId: userId ?? this.userId,
+      gender: gender ?? this.gender,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       image: image,
-      birthdate: birthdate,
-      physicalActivity: physicalActivity,
-      medical: medical,
+      birthdate: birthdate ?? this.birthdate,
+      physicalActivity: physicalActivity ?? this.physicalActivity,
+      medical: medical ?? this.medical,
       carbohydrates: carbohydrates ?? this.carbohydrates,
       fats: fats ?? this.fats,
       protein: protein ?? this.protein,
-      user: user,
+      user: user ?? this.user,
+      patientIdForDiet: patientIdForDiet ?? this.patientIdForDiet,
     );
   }
 }

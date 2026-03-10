@@ -18,12 +18,12 @@ class DoctorPatientsPage extends GetView<DoctorPatientsController> {
       builder: (c) => SafeArea(
         child: Scaffold(
         drawer: HomeDrawer(controller: controller),
-
+        backgroundColor: Colors.grey.shade100,
         appBar: CustomAppBar(
           title: "patientsList".tr,
           leading: Builder(
             builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu, color: Color(0xff4a3f6a), size: 26),
+              icon: Icon(Icons.menu, color: AppColor.primary, size: 26),
               onPressed: () => Scaffold.of(ctx).openDrawer(),
               padding: const EdgeInsets.all(4),
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
@@ -32,7 +32,7 @@ class DoctorPatientsPage extends GetView<DoctorPatientsController> {
           actions: [
             IconButton(
               onPressed: c.refreshPatients,
-              icon: const Icon(Icons.refresh, color: Color(0xff4a3f6a)),
+              icon: Icon(Icons.refresh, color: AppColor.primary),
             ),
           ],
         ),

@@ -12,19 +12,25 @@ class DoctorsPage extends GetView<DoctorsController> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<DoctorsController>(
-      builder: (c) => Scaffold(
-        appBar: CustomAppBar(
-          title: "doctorsList".tr,
-          showBackButton: true,
+      builder: (c) => SafeArea(
+        child: Scaffold(
+          backgroundColor: Colors.grey.shade100,
+          appBar: CustomAppBar(
+            title: "doctorsList".tr,
+            showBackButton: true,
+            showLogo: true,
+          ),
+          body: _buildBody(c),
         ),
-        body: _buildBody(c),
       ),
     );
   }
 
   Widget _buildBody(DoctorsController c) {
     if (c.statusRequest == StatusRequest.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return  Center(
+        child: CircularProgressIndicator(color: AppColor.primary),
+      );
     }
 
     if (c.statusRequest == StatusRequest.offlineFailure) {
@@ -54,25 +60,26 @@ class DoctorsPage extends GetView<DoctorsController> {
 
     return RefreshIndicator(
       onRefresh: c.refreshDoctors,
+      color: AppColor.primary,
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         itemCount: c.doctors.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        separatorBuilder: (_, __) => const SizedBox(height: 14),
         itemBuilder: (context, index) {
           final d = c.doctors[index];
           return _DoctorCard(
             doctor: d,
-            onTap: () {
-              // ✅ Open doctor details page
-              Get.toNamed("/doctor-details", arguments: d); // DoctorModel
-              // إذا تفضّل Map:
-              // Get.toNamed("/doctor-details", arguments: d.toJson());
-            },
+            onTap: () => Get.toNamed("/doctor-details", arguments: d),
           );
         },
       ),
     );
   }
+}
+
+String _doctorDisplayName(String name, bool isAr) {
+  if (name.startsWith("د.") || name.startsWith("Dr.")) return name;
+  return isAr ? "د. $name" : "Dr. $name";
 }
 
 class _DoctorCard extends StatelessWidget {
@@ -84,7 +91,8 @@ class _DoctorCard extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color _textPurple = Color(0xff67025F);
+  static const Color _cardBg = Colors.white;
+  static const Color _nameColor = Color(0xff4a3f6a);
 
   @override
   Widget build(BuildContext context) {
@@ -94,71 +102,66 @@ class _DoctorCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            color: _cardBg,
+            borderRadius: BorderRadius.circular(28),
             boxShadow: [
+              BoxShadow(
+                color: AppColor.primary.withOpacity(0.25),
+                blurRadius: 20,
+                offset: const Offset(4, 6),
+                spreadRadius: 0,
+              ),
               BoxShadow(
                 color: AppColor.primary.withOpacity(0.12),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                spreadRadius: 0,
               ),
             ],
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            textDirection: isAr ? TextDirection.ltr : TextDirection.rtl,
             children: [
-              if (isAr) ...[
-                const SizedBox(width: 16),
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppColor.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    Icons.medical_services_rounded,
-                    size: 32,
-                    color: _textPurple,
-                  ),
-                ),
-              ],
               Expanded(
-                child: Text(
-                  doctor.name,
-                  textAlign: isAr ? TextAlign.right : TextAlign.left,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: _textPurple,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: isAr ? MainAxisAlignment.start : MainAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _doctorDisplayName(doctor.name, isAr),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: _nameColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        textAlign: isAr ? TextAlign.right : TextAlign.left,
+                      ),
+                    ),
+                    if (doctor.isVerified) ...[
+                      const SizedBox(width: 6),
+                      Icon(Icons.verified_rounded, size: 20, color: AppColor.primary),
+                    ],
+                  ],
                 ),
               ),
-              if (!isAr) ...[
-                const SizedBox(width: 16),
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppColor.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    Icons.medical_services_rounded,
-                    size: 32,
-                    color: _textPurple,
-                  ),
+              const SizedBox(width: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  "assets/images/doc.png",
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
                 ),
-              ],
+              ),
             ],
           ),
         ),
@@ -186,12 +189,24 @@ class _StateView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton(
+              child: ElevatedButton(
                 onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: Text(buttonText),
               ),
             )

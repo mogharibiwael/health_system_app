@@ -11,7 +11,6 @@ import '../controller/home_doctor_controller.dart';
 class DoctorWelcomePage extends GetView<DoctorHomeController> {
   const DoctorWelcomePage({super.key});
 
-  static const Color _darkPurple = Color(0xff4a3f6a);
   static const Color _accentGreen = Color(0xff2e7d32);
 
   @override
@@ -23,45 +22,48 @@ class DoctorWelcomePage extends GetView<DoctorHomeController> {
         backgroundColor: Colors.white,
         drawer: HomeDrawer(controller: controller),
         appBar: AppBar(
-          backgroundColor: Colors.grey.shade100,
+          backgroundColor: AppColor.primary.withOpacity(0.08),
           elevation: 0,
-          leading: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColor.shadowColor.withOpacity(0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Image.asset(ImageAssets.logo, fit: BoxFit.contain),
-                ),
-              ),
-            ),
+          leading:Builder(
+              builder: (ctx)  {
+              return IconButton(
+                icon: Icon(Icons.menu, color: AppColor.primary, size: 26),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              );
+            }
           ),
           title: Text(
             "yourPrivateClinic".tr,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: _darkPurple,
+              color: AppColor.primary,
             ),
           ),
           actions: [
-            Builder(
-              builder: (ctx) => IconButton(
-                icon: const Icon(Icons.menu, color: _darkPurple, size: 26),
-                onPressed: () => Scaffold.of(ctx).openDrawer(),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColor.shadowColor.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Image.asset(ImageAssets.logo, fit: BoxFit.contain),
+                  ),
+                ),
               ),
-            ),
+            )
+
           ],
         ),
         body: Padding(
@@ -74,8 +76,8 @@ class DoctorWelcomePage extends GetView<DoctorHomeController> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColor.customGrey,
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(25),bottomRight:Radius.circular(25) ),
                   boxShadow: [
                     BoxShadow(
                       color: AppColor.shadowColor.withOpacity(0.15),
@@ -97,16 +99,16 @@ class DoctorWelcomePage extends GetView<DoctorHomeController> {
                     const SizedBox(height: 8),
                     Text(
                       "welcomeToClinicSub".tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: _darkPurple,
+                        color: AppColor.primary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               // Logout button
               SizedBox(
                 width: double.infinity,
@@ -114,7 +116,7 @@ class DoctorWelcomePage extends GetView<DoctorHomeController> {
                 child: ElevatedButton(
                   onPressed: controller.logout,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _darkPurple,
+                    backgroundColor: AppColor.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

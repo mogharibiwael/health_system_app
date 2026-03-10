@@ -23,7 +23,18 @@ class MyServices extends GetxService {
   }
 
   String? get token => sharedPreferences.getString("token");
-  String? get type => sharedPreferences.getString("type");
+
+  /// User type: "doctor", "user", "admin". Falls back to user["type"] or "doctor" if user has doctor object.
+  String? get type {
+    final stored = sharedPreferences.getString("type");
+    if (stored != null && stored.trim().isNotEmpty) return stored;
+    final u = user;
+    if (u == null) return null;
+    final t = (u["type"] ?? "").toString().trim().toLowerCase();
+    if (t.isNotEmpty) return t;
+    if (u["doctor"] != null) return "doctor";
+    return "user";
+  }
 
   bool get isLoggedIn => token != null && token!.trim().isNotEmpty;
 
@@ -45,6 +56,26 @@ class MyServices extends GetxService {
     return int.tryParse(id?.toString() ?? "");
   }
 
+  /// Doctor's record id (from doctors table). Required for diet-plans API.
+  /// Backend expects doctor_id, not user_id. Read from user["doctor_id"] or user["doctor"]["id"].
+  int? get doctorId {
+    final u = user;
+    if (u == null) return null;
+    final did = u["doctor_id"];
+    if (did != null) {
+      if (did is int) return did;
+      final parsed = int.tryParse(did.toString());
+      if (parsed != null) return parsed;
+    }
+    final doctor = u["doctor"];
+    if (doctor is Map) {
+      final id = doctor["id"];
+      if (id is int) return id;
+      return int.tryParse(id?.toString() ?? "");
+    }
+    return null;
+  }
+
   // -------------------------------
   // ✅ Subscriptions cache (doctor ids)
   static const String _subsKey = "subscribed_doctor_ids";
@@ -59,6 +90,14 @@ class MyServices extends GetxService {
   Future<void> markSubscribedDoctor(int doctorId) async {
     final ids = subscribedDoctorIds;
     ids.add(doctorId);
+    await sharedPreferences.setStringList(
+      _subsKey,
+      ids.map((e) => e.toString()).toList(),
+    );
+  }
+
+  /// Replace subscribed doctor ids (e.g. after fetching from backend)
+  Future<void> setSubscribedDoctorIds(Set<int> ids) async {
     await sharedPreferences.setStringList(
       _subsKey,
       ids.map((e) => e.toString()).toList(),

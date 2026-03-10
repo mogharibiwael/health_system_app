@@ -12,6 +12,22 @@ class DoctorPatientsData {
     return await crud.getData(url, token: token);
   }
 
+  /// GET /doctor/profile - fetch current doctor (auth). Returns doctor record with id.
+  Future<Either<StatusRequest, Map<String, dynamic>>> getDoctorProfile({
+    String? token,
+  }) async {
+    return await crud.getData(ApiLinks.doctorProfile, token: token);
+  }
+
+  /// GET /api/patients/{id} - fetch single patient with subscription info
+  Future<Either<StatusRequest, Map<String, dynamic>>> getPatientDetails({
+    required int patientId,
+    String? token,
+  }) async {
+    final url = ApiLinks.doctorPatient(patientId);
+    return await crud.getData(url, token: token);
+  }
+
   /// GET /doctor/patients/{id}/macros - fetch patient macros (carbs, fats, protein)
   Future<Either<StatusRequest, Map<String, dynamic>>> getPatientMacros({
     required int patientId,

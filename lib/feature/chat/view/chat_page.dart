@@ -5,6 +5,7 @@ import '../../../core/constant/theme/colors.dart';
 import '../../../core/shared/widgets/app_bar.dart';
 import '../controller/chat_controller.dart';
 import '../model/chat_message_model.dart';
+import '../widget/medical_test_dialog.dart';
 
 class ChatPage extends GetView<ChatController> {
   const ChatPage({super.key});
@@ -34,6 +35,15 @@ class ChatPage extends GetView<ChatController> {
                 _Composer(
                   controller: c.messageController,
                   isSending: c.isSending,
+                  attachedFileName: c.attachedFileName,
+                  onRemoveAttachment: c.clearAttachment,
+                  onAttach: () {
+                    MedicalTestDialog.show(
+                      context: context,
+                      doctorId: c.doctorId,
+                      onSend: c.uploadMedicalTest,
+                    );
+                  },
                   onSend: c.send,
                 ),
               ],
@@ -145,11 +155,17 @@ class _Bubble extends StatelessWidget {
 class _Composer extends StatelessWidget {
   final TextEditingController controller;
   final bool isSending;
+  final String? attachedFileName;
+  final VoidCallback? onRemoveAttachment;
+  final VoidCallback? onAttach;
   final VoidCallback onSend;
 
   const _Composer({
     required this.controller,
     required this.isSending,
+    this.attachedFileName,
+    this.onRemoveAttachment,
+    this.onAttach,
     required this.onSend,
   });
 
@@ -163,41 +179,92 @@ class _Composer extends StatelessWidget {
           color: Theme.of(context).scaffoldBackgroundColor,
           border: Border(top: BorderSide(color: Colors.grey.shade300)),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                minLines: 1,
-                maxLines: 4,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => isSending ? null : onSend(),
-                decoration: InputDecoration(
-                  hintText: "Type a message...",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            if (attachedFileName != null && attachedFileName!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.attach_file, size: 20, color: AppColor.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        attachedFileName!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: onRemoveAttachment,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            SizedBox(
-              height: 46,
-              width: 46,
-              child: ElevatedButton(
-                onPressed: isSending ? null : onSend,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  backgroundColor: AppColor.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Row(
+              children: [
+                if (onAttach != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: SizedBox(
+                      height: 46,
+                      width: 46,
+                      child: IconButton(
+                        onPressed: isSending ? null : onAttach,
+                        icon: Icon(Icons.add_circle_outline, color: AppColor.primary),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColor.primary.withOpacity(0.08),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    minLines: 1,
+                    maxLines: 4,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => isSending ? null : onSend(),
+                    decoration: InputDecoration(
+                      hintText: "Type a message...",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  ),
                 ),
-                child: isSending
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Icon(Icons.send),
-              ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  height: 46,
+                  width: 46,
+                  child: ElevatedButton(
+                    onPressed: isSending ? null : onSend,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: AppColor.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: isSending
+                        ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                        : const Icon(Icons.send),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

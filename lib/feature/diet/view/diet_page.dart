@@ -29,6 +29,7 @@ class DietPage extends GetView<DietController> {
               ),
           ],
         ),
+        backgroundColor: Colors.grey.shade100,
         body: _buildBody(c),
       ),
     ));
@@ -76,15 +77,20 @@ class DietPage extends GetView<DietController> {
         children: [
           _DietInfoCard(diet: diet),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => Get.toNamed("/diet-meals"),
-            icon: const Icon(Icons.restaurant_menu),
-            label: Text("viewMeals".tr),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primary,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: () => Get.toNamed("/diet-meals"),
+              icon: const Icon(Icons.restaurant_menu),
+              label: Text("viewMeals".tr),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
@@ -174,7 +180,7 @@ class DietPage extends GetView<DietController> {
                       child: ElevatedButton(
                         onPressed: () {
                           final patientId = int.tryParse(c.patientIdController.text);
-                          final doctorId = c.currentUserId;
+                          final doctorId = c.currentDoctorId ?? c.currentUserId;
                           final dailyCalories = int.tryParse(c.dailyCaloriesController.text);
                           final durationDays = int.tryParse(c.durationDaysController.text);
 
@@ -224,9 +230,18 @@ class _DietInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.shadowColor.withOpacity(0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

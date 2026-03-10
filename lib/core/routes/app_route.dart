@@ -16,15 +16,26 @@ class AppRoute {
   static const chat = "/chat";
   static const consultations = "/consultations";
   static const diet = "/diet";
+  static const doctorDiets = "/doctor-diets";
   static const dietMeals = "/diet-meals";
   static const createDietForPatient = "/create-diet-for-patient";
+  static const dietPeriods = "/diet-periods";
+  static const dietTargets = "/diet-targets";
+  static const dietBaseServings = "/diet-base-servings";
+  static const dietPortionCategories = "/diet-portion-categories";
+  static const dietPortionCarb = "/diet-portion-carb";
+  static const dietPortionProtein = "/diet-portion-protein";
+  static const dietDistribution = "/diet-distribution";
+  static const dietDetermineMeals = "/diet-determine-meals";
   static const welcome = "/welcome";
-
+  static const medicalFiles = "/medical-files";
+  static const medicalTests = "/medical-tests";
 
 //   doctor
   static const doctorWelcome = "/doctor-welcome";
   static const doctorHome = "/doctor-home";
 
-
-
+  /// Subscribe flow: info form → payment invoice
+  static const subscriptionInfo = "/subscription-info";
+  static const paymentInvoice = "/payment-invoice";
 }

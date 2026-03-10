@@ -30,7 +30,64 @@ class ChatData {
     );
   }
 
-  // ✅ NEW
+  /// Send message with file attachment (multipart). Backend should accept: conversation_id, receiver_id, message, file.
+  Future<dynamic> sendMessageWithFile({
+    required int conversationId,
+    required int receiverId,
+    required String message,
+    required String filePath,
+    String? fileName,
+    String? token,
+  }) async {
+    final fields = <String, String>{
+      "conversation_id": conversationId.toString(),
+      "receiver_id": receiverId.toString(),
+      "message": message,
+    };
+    final files = [
+      MultipartFileField(
+        fieldName: "file",
+        filePath: filePath,
+        fileName: fileName,
+      ),
+    ];
+    return crud.postMultipart(
+      ApiLinks.chatMessages,
+      fields: fields,
+      files: files,
+      token: token,
+    );
+  }
+
+  /// POST /api/medical-tests - Upload medical test (name + file) from patient chat
+  Future<dynamic> uploadMedicalTest({
+    required String name,
+    required String filePath,
+    String? fileName,
+    required int doctorId,
+    required int userId,
+    String? token,
+  }) async {
+    final fields = <String, String>{
+      "name": name,
+      "doctor_id": doctorId.toString(),
+      "user_id": userId.toString(),
+    };
+    final files = [
+      MultipartFileField(
+        fieldName: "file",
+        filePath: filePath,
+        fileName: fileName,
+      ),
+    ];
+    return crud.postMultipart(
+      ApiLinks.medicalTests,
+      fields: fields,
+      files: files,
+      token: token,
+    );
+  }
+
   Future<dynamic> markAsRead({
     required int messageId,
     String? token,

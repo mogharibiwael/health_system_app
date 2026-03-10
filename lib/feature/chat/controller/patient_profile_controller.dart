@@ -29,6 +29,26 @@ class PatientProfileController extends GetxController {
     weightController = TextEditingController();
     medicalHistoryController = TextEditingController();
     super.onInit();
+    loadProfile();
+  }
+
+  /// Load existing profile to pre-fill form when editing
+  Future<void> loadProfile() async {
+    final token = myServices.token;
+    if (token == null || token.trim().isEmpty) return;
+
+    final res = await data.getProfile(token: token);
+    res.fold((_) {}, (r) {
+      final d = r["data"] is Map ? r["data"] as Map<String, dynamic> : r;
+      if (d is! Map<String, dynamic>) return;
+      gender = d["gender"]?.toString() ?? "male";
+      dobController.text = d["date_of_birth"]?.toString() ?? "";
+      heightController.text = d["height"]?.toString() ?? d["height_cm"]?.toString() ?? "";
+      weightController.text = d["current_weight"]?.toString() ?? d["weight"]?.toString() ?? d["weight_kg"]?.toString() ?? "";
+      physicalActivity = d["physical_activity"]?.toString() ?? "active";
+      medicalHistoryController.text = d["medical_history"]?.toString() ?? "";
+      update();
+    });
   }
 
   void setGender(String v) {
