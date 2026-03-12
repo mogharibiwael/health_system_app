@@ -1,4 +1,5 @@
 const Map<String, String> arTranslation = {
+  "appName": "Nutri Guide",
   "welcome": "مرحبا",
   "welcomeTitle": "مرحبا بكم",
   "welcomeBody": "هنا نقدم لكم ارشادات ونصائح حول الحميات الصحية لمساعدتك في تحقيق أهدافك الصحية.",

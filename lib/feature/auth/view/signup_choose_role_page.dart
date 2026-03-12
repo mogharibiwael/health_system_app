@@ -54,7 +54,7 @@ class SignupChooseRolePage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: GestureDetector(
-                  onTap: () => Get.back(),
+                  onTap: () => Navigator.of(context).pop(),
                   child: Icon(Icons.arrow_back, color: Colors.grey.shade700, size: 28),
                 ),
               ),

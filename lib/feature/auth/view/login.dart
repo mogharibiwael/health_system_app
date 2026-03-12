@@ -87,7 +87,7 @@ class Login extends GetView<LoginController> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: GestureDetector(
-                  onTap: () => Get.back(),
+                  onTap: () => Get.offNamed(AppRoute.welcome),
                   child: Icon(
                     Icons.arrow_back,
                     color: Colors.grey.shade700,

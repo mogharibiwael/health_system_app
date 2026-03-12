@@ -17,6 +17,7 @@ class ForgotPasswordPage extends GetView<ForgotPasswordController> {
       appBar: CustomAppBar(
         title: "forgotPasswordTitle".tr,
         showBackButton: true,
+        onBack: () => Navigator.of(context).pop(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),

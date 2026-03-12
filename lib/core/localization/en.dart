@@ -1,4 +1,5 @@
 const Map<String, String> enTranslation = {
+  "appName": "Nutri Guide",
   "welcome": "Welcome",
   "welcomeTitle": "Welcome",
   "welcomeBody": "Here we offer you guidance and tips about healthy diets to help you achieve your health goals.",
